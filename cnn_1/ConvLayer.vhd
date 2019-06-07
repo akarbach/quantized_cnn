@@ -11,7 +11,7 @@ entity ConvLayer is
            Relu          : string := "yes";  --"no"/"yes"  -- nonlinear Relu function
            BP            : string := "no";   --"no"/"yes"  -- Bypass
            TP            : string := "no";   --"no"/"yes"  -- Test pattern output
-  	       mult_sum      : string := "mult"; --"mult"/"sum";
+  	       mult_sum      : string := "sum"; --"mult"/"sum";
            --CL_units      : integer := 3; -- number of CL units
            N             : integer := W; -- input data width
            M             : integer := W; -- input weight width
@@ -192,7 +192,7 @@ begin
 
 w_unit_ni <= conv_integer(unsigned('0' & w_unit_n));
 
-w_en_p : process (clk,rst)
+w_en_p : process (w_unit_ni)
 begin
    For I in 0 to CL_units-1 loop
        if w_en = '1' then

@@ -68,6 +68,18 @@ component Binary_adder8 is
            en_out        : out std_logic);                        
 end component;
 
+component generic_mult is
+generic (N: integer; 
+         M: integer
+         );
+port ( 
+       clk    :  in  std_logic;
+       rst    :  in  std_logic; 
+       a      :  in  std_logic_vector(N-1 downto 0);
+       b      :  in  std_logic_vector(M-1 downto 0);
+       prod   :  out std_logic_vector(M+N-1 downto 0) );
+end component;
+
 signal     en_in1, en_end2, en_end3 : std_logic_vector(1 downto 0) ;
 --signal en_in1v,  en_in2v,  en_in3v  : std_logic_vector (N-1 downto 0);
 --signal en_mid1v, en_mid2v, en_mid3v : std_logic_vector (N-1 downto 0);
@@ -105,41 +117,17 @@ signal c06         : std_logic_vector (N + M -1 downto 0);
 signal c07         : std_logic_vector (N + M -1 downto 0);
 signal c08         : std_logic_vector (N + M -1 downto 0);
 signal c09         : std_logic_vector (N + M -1 downto 0);
-signal c10         : std_logic_vector (N + M -1 downto 0);
-signal c11         : std_logic_vector (N + M -1 downto 0);
-signal c12         : std_logic_vector (N + M -1 downto 0);
-signal c13         : std_logic_vector (N + M -1 downto 0);
-signal c14         : std_logic_vector (N + M -1 downto 0);
-signal c15         : std_logic_vector (N + M -1 downto 0);
-signal c16         : std_logic_vector (N + M -1 downto 0);
-signal c17         : std_logic_vector (N + M -1 downto 0);
-signal c18         : std_logic_vector (N + M -1 downto 0);
-signal c19         : std_logic_vector (N + M -1 downto 0);
-signal c20         : std_logic_vector (N + M -1 downto 0);
-signal c21         : std_logic_vector (N + M -1 downto 0);
-signal c22         : std_logic_vector (N + M -1 downto 0);
-signal c23         : std_logic_vector (N + M -1 downto 0);
-signal c24         : std_logic_vector (N + M -1 downto 0);
-signal c25         : std_logic_vector (N + M -1 downto 0);
-signal c26         : std_logic_vector (N + M -1 downto 0);
-signal c27         : std_logic_vector (N + M -1 downto 0);
+
+signal c10         : std_logic_vector (N + M +1 downto 0);
+signal c11         : std_logic_vector (N + M +1 downto 0);
+signal c12         : std_logic_vector (N + M +1 downto 0);
+
+signal c13         : std_logic_vector (N + M +3 downto 0);
 
 
-signal c30         : std_logic_vector (N + M +1 downto 0);
-signal c31         : std_logic_vector (N + M +1 downto 0);
-signal c32         : std_logic_vector (N + M +1 downto 0);
-signal c33         : std_logic_vector (N + M +1 downto 0);
-signal c34         : std_logic_vector (N + M +1 downto 0);
-signal c35         : std_logic_vector (N + M +1 downto 0);
-signal c36         : std_logic_vector (N + M +1 downto 0);
 
-signal c37         : std_logic_vector (N + M + 3 downto 0);
-signal c38         : std_logic_vector (N + M + 3 downto 0);
-
-signal c39         : std_logic_vector (N + M + 4 downto 0);
-
-signal c39_relu    : std_logic_vector (N + M +4 downto 0);
-signal c39_ovf     : std_logic_vector (N + M +4 downto 0);
+signal d_relu      : std_logic_vector (N + M +3 downto 0);
+signal d_ovf       : std_logic_vector (N + M +3 downto 0);
 
 --signal en_conv1, en_conv2, en_conv3, en_conv4, en_conv5, en_conv6    : std_logic_vector(1 downto 0);
 signal en_relu, en_ovf     : std_logic_vector(1 downto 0);
@@ -174,139 +162,67 @@ gen_Mults: if mult_sum = "mult" generate
   begin
     if rising_edge(clk) then
       c01 <= w1 * data2conv1;
-      c02 <= w4 * data2conv2;
-      c03 <= w7 * data2conv3;
-
-      c04 <= w2 * data2conv1;
-      c05 <= w5 * data2conv2;
-      c06 <= w8 * data2conv3;
-
-      c07 <= w3 * data2conv1;
-      c08 <= w6 * data2conv2;
-      c09 <= w9 * data2conv3;
-
-      c10 <= w1 * data2conv4;
-      c11 <= w4 * data2conv5;
-      c12 <= w7 * data2conv6;
-
-      c13 <= w2 * data2conv4;
-      c14 <= w5 * data2conv5;
-      c15 <= w8 * data2conv6;
-
-      c16 <= w3 * data2conv4;
-      c17 <= w6 * data2conv5;
-      c18 <= w9 * data2conv6;
-
-      c19 <= w1 * data2conv7;
-      c20 <= w4 * data2conv8;
-      c21 <= w7 * data2conv9;
-
-      c22 <= w2 * data2conv7;
-      c23 <= w5 * data2conv8;
-      c24 <= w8 * data2conv9;
-
-      c25 <= w3 * data2conv7;
-      c26 <= w6 * data2conv8;
-      c27 <= w9 * data2conv9;
-
-      c30 <= (c01(c01'left) & c01(c01'left) & c01) + (c02(c02'left) & c02(c02'left) & c02) + (c03(c03'left) & c03(c03'left) & c03) + (c04(c04'left) & c04(c04'left) & c04);
-      c31 <= (c05(c05'left) & c05(c05'left) & c05) + (c06(c06'left) & c06(c06'left) & c06) + (c07(c07'left) & c07(c07'left) & c07) + (c08(c08'left) & c08(c08'left) & c08);
-      c32 <= (c09(c09'left) & c09(c09'left) & c09) + (c10(c10'left) & c10(c10'left) & c10) + (c11(c11'left) & c11(c11'left) & c11) + (c12(c12'left) & c12(c12'left) & c12);
-      c33 <= (c13(c13'left) & c13(c13'left) & c13) + (c14(c14'left) & c14(c14'left) & c14) + (c15(c15'left) & c15(c15'left) & c15) + (c16(c16'left) & c16(c16'left) & c16);
-      c34 <= (c17(c17'left) & c17(c17'left) & c17) + (c18(c18'left) & c18(c18'left) & c18) + (c19(c19'left) & c19(c19'left) & c19) + (c20(c20'left) & c20(c20'left) & c20);
-      c35 <= (c21(c21'left) & c21(c21'left) & c21) + (c22(c22'left) & c22(c22'left) & c22) + (c23(c23'left) & c23(c23'left) & c23) + (c24(c24'left) & c24(c24'left) & c24);
-      c36 <= (c25(c25'left) & c25(c25'left) & c25) + (c26(c26'left) & c26(c26'left) & c26) + (c27(c27'left) & c27(c27'left) & c27);
-
-      c37 <= (c30(c30'left) & c30(c30'left) & c30) + (c31(c31'left) & c31(c31'left) & c31) + (c32(c32'left) & c32(c32'left) & c32) + (c33(c33'left) & c33(c33'left) & c33);
-      c38 <= (c34(c34'left) & c34(c34'left) & c34) + (c35(c35'left) & c35(c35'left) & c35) + (c36(c36'left) & c36(c36'left) & c36);
-
-      c39 <= (c37(c37'left) & c37) + (c38(c38'left) & c38);
+      c02 <= w2 * data2conv2;
+      c03 <= w3 * data2conv3;
+      c04 <= w4 * data2conv4;
+      c05 <= w5 * data2conv5;
+      c06 <= w6 * data2conv6;
+      c07 <= w7 * data2conv7;
+      c08 <= w8 * data2conv8;
+      c09 <= w9 * data2conv9;
+ 
     end if;
   end process p_conv_oper;
-end generate;
+end generate;  -- mult
 
 gen_Adds: if mult_sum = "sum" generate 
 
-  A01: Binary_adder8 generic map (N => N,M => M) port map (clk => clk,rst => rst,en_in => '0', Multiplier => data2conv1, Multiplicand => w1,d_out => c01, en_out => open);
-  A02: Binary_adder8 generic map (N => N,M => M) port map (clk => clk,rst => rst,en_in => '0', Multiplier => data2conv2, Multiplicand => w4,d_out => c02, en_out => open);
-  A03: Binary_adder8 generic map (N => N,M => M) port map (clk => clk,rst => rst,en_in => '0', Multiplier => data2conv3, Multiplicand => w7,d_out => c03, en_out => open);
-  A04: Binary_adder8 generic map (N => N,M => M) port map (clk => clk,rst => rst,en_in => '0', Multiplier => data2conv1, Multiplicand => w2,d_out => c04, en_out => open);
-  A05: Binary_adder8 generic map (N => N,M => M) port map (clk => clk,rst => rst,en_in => '0', Multiplier => data2conv2, Multiplicand => w5,d_out => c05, en_out => open);
-  A06: Binary_adder8 generic map (N => N,M => M) port map (clk => clk,rst => rst,en_in => '0', Multiplier => data2conv3, Multiplicand => w8,d_out => c06, en_out => open);
-  A07: Binary_adder8 generic map (N => N,M => M) port map (clk => clk,rst => rst,en_in => '0', Multiplier => data2conv1, Multiplicand => w3,d_out => c07, en_out => open);
-  A08: Binary_adder8 generic map (N => N,M => M) port map (clk => clk,rst => rst,en_in => '0', Multiplier => data2conv2, Multiplicand => w6,d_out => c08, en_out => open);
-  A09: Binary_adder8 generic map (N => N,M => M) port map (clk => clk,rst => rst,en_in => '0', Multiplier => data2conv3, Multiplicand => w9,d_out => c09, en_out => open);
-  A10: Binary_adder8 generic map (N => N,M => M) port map (clk => clk,rst => rst,en_in => '0', Multiplier => data2conv4, Multiplicand => w1,d_out => c10, en_out => open);
-  A11: Binary_adder8 generic map (N => N,M => M) port map (clk => clk,rst => rst,en_in => '0', Multiplier => data2conv5, Multiplicand => w4,d_out => c11, en_out => open);
-  A12: Binary_adder8 generic map (N => N,M => M) port map (clk => clk,rst => rst,en_in => '0', Multiplier => data2conv6, Multiplicand => w7,d_out => c12, en_out => open);
-  A13: Binary_adder8 generic map (N => N,M => M) port map (clk => clk,rst => rst,en_in => '0', Multiplier => data2conv4, Multiplicand => w2,d_out => c13, en_out => open);
-  A14: Binary_adder8 generic map (N => N,M => M) port map (clk => clk,rst => rst,en_in => '0', Multiplier => data2conv5, Multiplicand => w5,d_out => c14, en_out => open);
-  A15: Binary_adder8 generic map (N => N,M => M) port map (clk => clk,rst => rst,en_in => '0', Multiplier => data2conv6, Multiplicand => w8,d_out => c15, en_out => open);
-  A16: Binary_adder8 generic map (N => N,M => M) port map (clk => clk,rst => rst,en_in => '0', Multiplier => data2conv4, Multiplicand => w3,d_out => c16, en_out => open);
-  A17: Binary_adder8 generic map (N => N,M => M) port map (clk => clk,rst => rst,en_in => '0', Multiplier => data2conv5, Multiplicand => w6,d_out => c17, en_out => open);
-  A18: Binary_adder8 generic map (N => N,M => M) port map (clk => clk,rst => rst,en_in => '0', Multiplier => data2conv6, Multiplicand => w9,d_out => c18, en_out => open);
-  A19: Binary_adder8 generic map (N => N,M => M) port map (clk => clk,rst => rst,en_in => '0', Multiplier => data2conv7, Multiplicand => w1,d_out => c19, en_out => open);
-  A20: Binary_adder8 generic map (N => N,M => M) port map (clk => clk,rst => rst,en_in => '0', Multiplier => data2conv8, Multiplicand => w4,d_out => c20, en_out => open);
-  A21: Binary_adder8 generic map (N => N,M => M) port map (clk => clk,rst => rst,en_in => '0', Multiplier => data2conv9, Multiplicand => w7,d_out => c21, en_out => open);
-  A22: Binary_adder8 generic map (N => N,M => M) port map (clk => clk,rst => rst,en_in => '0', Multiplier => data2conv7, Multiplicand => w2,d_out => c22, en_out => open);
-  A23: Binary_adder8 generic map (N => N,M => M) port map (clk => clk,rst => rst,en_in => '0', Multiplier => data2conv8, Multiplicand => w5,d_out => c23, en_out => open);
-  A24: Binary_adder8 generic map (N => N,M => M) port map (clk => clk,rst => rst,en_in => '0', Multiplier => data2conv9, Multiplicand => w8,d_out => c24, en_out => open);
-  A25: Binary_adder8 generic map (N => N,M => M) port map (clk => clk,rst => rst,en_in => '0', Multiplier => data2conv7, Multiplicand => w3,d_out => c25, en_out => open);
-  A26: Binary_adder8 generic map (N => N,M => M) port map (clk => clk,rst => rst,en_in => '0', Multiplier => data2conv8, Multiplicand => w6,d_out => c26, en_out => open);
-  A27: Binary_adder8 generic map (N => N,M => M) port map (clk => clk,rst => rst,en_in => '0', Multiplier => data2conv9, Multiplicand => w9,d_out => c27, en_out => open);
+  --A01: Binary_adder generic map (N => N,M => M) port map (clk => clk,rst => rst,en_in => '0', Multiplier => data2conv1, Multiplicand => w1,d_out => c01, en_out => open);
+  --A02: Binary_adder generic map (N => N,M => M) port map (clk => clk,rst => rst,en_in => '0', Multiplier => data2conv2, Multiplicand => w4,d_out => c02, en_out => open);
+  --A03: Binary_adder generic map (N => N,M => M) port map (clk => clk,rst => rst,en_in => '0', Multiplier => data2conv3, Multiplicand => w7,d_out => c03, en_out => open);
+  --A04: Binary_adder generic map (N => N,M => M) port map (clk => clk,rst => rst,en_in => '0', Multiplier => data2conv1, Multiplicand => w2,d_out => c04, en_out => open);
+  --A05: Binary_adder generic map (N => N,M => M) port map (clk => clk,rst => rst,en_in => '0', Multiplier => data2conv2, Multiplicand => w5,d_out => c05, en_out => open);
+  --A06: Binary_adder generic map (N => N,M => M) port map (clk => clk,rst => rst,en_in => '0', Multiplier => data2conv3, Multiplicand => w8,d_out => c06, en_out => open);
+  --A07: Binary_adder generic map (N => N,M => M) port map (clk => clk,rst => rst,en_in => '0', Multiplier => data2conv1, Multiplicand => w3,d_out => c07, en_out => open);
+  --A08: Binary_adder generic map (N => N,M => M) port map (clk => clk,rst => rst,en_in => '0', Multiplier => data2conv2, Multiplicand => w6,d_out => c08, en_out => open);
+  --A09: Binary_adder generic map (N => N,M => M) port map (clk => clk,rst => rst,en_in => '0', Multiplier => data2conv3, Multiplicand => w9,d_out => c09, en_out => open);
+
+  A1: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv1,  b  => w1,  prod => c01);
+  A2: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv2,  b  => w2,  prod => c02);
+  A3: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv3,  b  => w3,  prod => c03);
+  A4: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv4,  b  => w4,  prod => c04);
+  A5: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv5,  b  => w5,  prod => c05);
+  A6: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv6,  b  => w6,  prod => c06);
+  A7: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv7,  b  => w7,  prod => c07);
+  A8: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv8,  b  => w8,  prod => c08);
+  A9: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv9,  b  => w9,  prod => c09);
+
+
+end generate; -- sum
 
   p_conv_oper : process (clk)
   begin
     if rising_edge(clk) then
 
-      c30 <= (c01(c01'left) & c01(c01'left) & c01) + (c02(c02'left) & c02(c02'left) & c02) + (c03(c03'left) & c03(c03'left) & c03) + (c04(c04'left) & c04(c04'left) & c04);
-      c31 <= (c05(c05'left) & c05(c05'left) & c05) + (c06(c06'left) & c06(c06'left) & c06) + (c07(c07'left) & c07(c07'left) & c07) + (c08(c08'left) & c08(c08'left) & c08);
-      c32 <= (c09(c09'left) & c09(c09'left) & c09) + (c10(c10'left) & c10(c10'left) & c10) + (c11(c11'left) & c11(c11'left) & c11) + (c12(c12'left) & c12(c12'left) & c12);
-      c33 <= (c13(c13'left) & c13(c13'left) & c13) + (c14(c14'left) & c14(c14'left) & c14) + (c15(c15'left) & c15(c15'left) & c15) + (c16(c16'left) & c16(c16'left) & c16);
-      c34 <= (c17(c17'left) & c17(c17'left) & c17) + (c18(c18'left) & c18(c18'left) & c18) + (c19(c19'left) & c19(c19'left) & c19) + (c20(c20'left) & c20(c20'left) & c20);
-      c35 <= (c21(c21'left) & c21(c21'left) & c21) + (c22(c22'left) & c22(c22'left) & c22) + (c23(c23'left) & c23(c23'left) & c23) + (c24(c24'left) & c24(c24'left) & c24);
-      c36 <= (c25(c25'left) & c25(c25'left) & c25) + (c26(c26'left) & c26(c26'left) & c26) + (c27(c27'left) & c27(c27'left) & c27);
+      c10 <= (c01(c01'left) & c01(c01'left) & c01) + (c02(c02'left) & c02(c02'left) & c02) + (c03(c03'left) & c03(c03'left) & c03);
+      c11 <= (c04(c04'left) & c04(c04'left) & c04) + (c05(c05'left) & c05(c05'left) & c05) + (c06(c06'left) & c06(c06'left) & c06);
+      c12 <= (c07(c07'left) & c07(c07'left) & c07) + (c08(c08'left) & c08(c08'left) & c08) + (c09(c09'left) & c09(c09'left) & c09);
 
-      c37 <= (c30(c30'left) & c30(c30'left) & c30) + (c31(c31'left) & c31(c31'left) & c31) + (c32(c32'left) & c32(c32'left) & c32) + (c33(c33'left) & c33(c33'left) & c33);
-      c38 <= (c34(c34'left) & c34(c34'left) & c34) + (c35(c35'left) & c35(c35'left) & c35) + (c36(c36'left) & c36(c36'left) & c36);
-
-      c39   <= (c37(c37'left) & c37) + (c38(c38'left) & c38);
+      c13 <= (c10(c10'left) & c10(c10'left) & c10) + (c11(c11'left) & c11(c11'left) & c11) + (c12(c12'left) & c12(c12'left) & c12);
 
     end if;
   end process p_conv_oper;
-end generate;
 
-
- -- p_conv_oper2 : process (clk,rst)
- -- begin
- --   if rst = '1' then
- --     en_conv1 <= (others => '0');
- --     en_conv2 <= (others => '0');
- --     en_conv3 <= (others => '0');
- --     en_conv4 <= (others => '0');
- --     en_conv5 <= (others => '0');
- --     en_conv6 <= (others => '0');
- --   elsif rising_edge(clk) then
- --     en_conv1 <= en2conv; 
- --     en_conv2 <= en_conv1; 
- --     en_conv3 <= en_conv2;
- --     en_conv4 <= en_conv3;
- --     en_conv5 <= en_conv4;
- --     en_conv6 <= en_conv5;
- --   end if;
- -- end process p_conv_oper2;
-
--- RELU
 
   p_relu : process (clk)
   begin
     if rising_edge(clk) then
       if Relu = "yes" then
-         relu_for: for i in 0 to c39'length-1  loop
-           c39_relu(i) <= c39(i) and not c39(c39'left);
+         relu_for: for i in 0 to c13'length-1  loop
+           d_relu(i) <= c13(i) and not c13(c13'left);
          end loop relu_for;
       else
-         c39_relu <= c39;
+         d_relu <= c13;
       end if;
     end if;
   end process p_relu;
@@ -324,10 +240,10 @@ end generate;
    p_ovf : process (clk)
   begin
     if rising_edge(clk) then
-       if c39_relu(c39_relu'left downto W + SR ) = 0  then
-          c39_ovf <= c39_relu;
+       if d_relu(d_relu'left downto W + SR ) = 0  then
+          d_ovf <= d_relu;
        else
-          c39_ovf <= (others => '1');
+          d_ovf <= (others => '1');
        end if;
     end if;
   end process p_ovf;
@@ -343,9 +259,9 @@ end generate;
 
 en_out  <= en_ovf(EN_BIT);
 sof_out <= en_ovf(SOF_BIT);
-d_out   <= c39_ovf (W + SR - 1 downto SR);
+d_out   <= d_ovf (W + SR - 1 downto SR);
 
-end generate; -- BP = yes
+end generate; -- BP = "no" and TP = "no"
 
 gen_TP_out: if BP = "no" and TP = "yes" generate 
    p_tg_gen : process (clk,rst)
@@ -362,7 +278,7 @@ gen_TP_out: if BP = "no" and TP = "yes" generate
   end process p_tg_gen;
   d_out   <= d_tp;
   
-end generate;
+end generate; -- TP = "yes"
 
 gen_BP: if BP = "yes" generate 
  process (data2conv1)
@@ -379,6 +295,6 @@ gen_BP: if BP = "yes" generate
   en_out  <= en_in;
   sof_out <= sof_in;
 
-end generate;
+end generate; --  BP = "yes"
 
 end a;
