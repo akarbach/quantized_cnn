@@ -54,6 +54,9 @@ set_global_assignment -name POWER_DEFAULT_INPUT_IO_TOGGLE_RATE 12.5%
 set_global_assignment -name POWER_AUTO_COMPUTE_TJ ON
 set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
 set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
+
+set_global_assignment -name VHDL_FILE ../multiplier_parallel/mult.vhd
+set_global_assignment -name VHDL_FILE ../multiplier_parallel/generic_mult.vhd
 set_global_assignment -name VHDL_FILE ../binary_adder/Binary_adder8.vhd
 set_global_assignment -name VHDL_FILE ConvLayer_types_package.vhd
 set_global_assignment -name VHDL_FILE ConvLayer_weight_gen.vhd
