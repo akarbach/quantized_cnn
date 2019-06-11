@@ -40,7 +40,11 @@ architecture a of ConvLayer_data_gen is
 
 constant EN_BIT  : integer range 0 to 1 := 0;
 constant SOF_BIT : integer range 0 to 1 := 1;
-
+constant PIX_FST : integer range 0 to 7 := 0;
+constant LIN_FST : integer range 0 to 7 := 1; 
+constant PIX_LST : integer range 0 to 7 := 2;
+constant LIN_LST : integer range 0 to 7 := 3;
+constant PIX_SOF : integer range 0 to 7 := 4;
 
 signal d_in1,   d_in2,   d_in3   : std_logic_vector (N-1 downto 0);
 signal d_mid1,  d_mid2,  d_mid3  : std_logic_vector (N-1 downto 0);
@@ -48,6 +52,7 @@ signal d_end1,  d_end2,  d_end3  : std_logic_vector (N-1 downto 0);
 signal en_in1,  en_in2,  en_in3  : std_logic_vector(1 downto 0);
 signal en_mid1, en_mid2, en_mid3 : std_logic_vector(1 downto 0);
 signal en_end1, en_end2, en_end3 : std_logic_vector(1 downto 0);
+signal firstlast_1, firstlast_2, firstlast_3, firstlast_mid, firstlast_mid2 : std_logic_vector (4 downto 0);
 
 --signal en_in1v,  en_in2v,  en_in3v  : std_logic_vector (N-1 downto 0);
 --signal en_mid1v, en_mid2v, en_mid3v : std_logic_vector (N-1 downto 0);
@@ -64,13 +69,16 @@ type t_datacontrol is array (0 to fifo_depth) of std_logic_vector(1 downto 0);
 signal en_line1 : t_datacontrol;
 signal en_line2 : t_datacontrol;
 
+type t_firstlast_pxl is array (0 to fifo_depth) of std_logic_vector(4 downto 0);
+signal firstlast_pxl : t_firstlast_pxl;
+
 --signal head : std_logic_vector 
 signal Head : natural range 0 to fifo_depth ;
 signal Tail : natural range 0 to fifo_depth ;
 
 signal row_num           : natural range 0 to in_row;
 signal col_num           : natural range 0 to in_col;
-signal start_pixel_count : natural range 0 to in_col + 1;
+signal start_pixel_count : natural range 0 to in_col + 2;
 --signal start_sof_count   : natural range 0 to in_col + 1;
 signal start_pixel_done  : std_logic;
 signal start_sof_done    : std_logic;
@@ -81,8 +89,8 @@ signal line_last   ,line_last_d   : std_logic;
 signal pixel_first ,pixel_first_d : std_logic;
 signal pixel_last  ,pixel_last_d  : std_logic;
 
-signal en2conv     : std_logic_vector(1 downto 0);
-signal en_count    : std_logic_vector(1 downto 0);
+--signal en2conv     : std_logic_vector(1 downto 0);
+--signal en_count    : std_logic_vector(1 downto 0);
 
 
 begin
@@ -97,7 +105,7 @@ gen_no_BP: if BP = "no" generate
        if en_in = '1' then
           d_in1  <= d_in  ;
           d_in2  <= d_in1 ;
-          d_in3  <= d_in2 ;
+          d_in3  <= d_in2 ;  
 
           d_mid2 <= d_mid1;
           d_mid3 <= d_mid2;
@@ -118,6 +126,11 @@ gen_no_BP: if BP = "no" generate
        en_mid3 <= (others => '0');
        en_end2 <= (others => '0');
        en_end3 <= (others => '0');
+       firstlast_1    <= (others => '0');
+       firstlast_2    <= (others => '0');
+       firstlast_3    <= (others => '0');
+       firstlast_mid2 <= (others => '0');
+
     elsif rising_edge(clk) then
        if en_in = '1' then
           en_in1(EN_BIT)  <= en_in;
@@ -125,8 +138,18 @@ gen_no_BP: if BP = "no" generate
           en_in2  <= en_in1;
           en_in3  <= en_in2;
 
+
+          firstlast_1(PIX_FST) <= pixel_first;
+          firstlast_1(LIN_FST) <= line_first; 
+          firstlast_1(PIX_LST) <= pixel_last;
+          firstlast_1(LIN_LST) <= line_last;
+          firstlast_1(PIX_SOF) <= sof_in;
+          firstlast_2 <= firstlast_1;
+          firstlast_3 <= firstlast_2;
+
           en_mid2 <= en_mid1;
           en_mid3 <= en_mid2;
+          firstlast_mid2 <= firstlast_mid;
 
           en_end2 <= en_end1;
           --en_end3 <= en_end2;
@@ -141,10 +164,12 @@ gen_no_BP: if BP = "no" generate
   begin
     if rising_edge(clk) then
        if en_in = '1' then
-          mem_line1(tail) <= d_in3;
-          mem_line2(tail) <= d_mid3;
-          d_mid1 <= mem_line1(head);
-          d_end1 <= mem_line2(head);
+          mem_line1(tail)      <= d_in3      ;
+          mem_line2(tail)      <= d_mid3     ;
+          firstlast_pxl(tail)  <= firstlast_3;
+          d_mid1         <= mem_line1(head)    ;
+          d_end1         <= mem_line2(head)    ;
+          firstlast_mid  <= firstlast_pxl(head);
        end if;
     end if;
   end process fifo1;
@@ -218,7 +243,7 @@ gen_no_BP: if BP = "no" generate
     if rst = '1' then
         row_num   <= 0;
         col_num   <= 0;
-        en_count  <= (others => '0');
+        --en_count  <= (others => '0');
         start_pixel_count <=  0 ;
         start_pixel_done  <= '0';
         --start_sof_count   <=  0 ;
@@ -246,7 +271,7 @@ gen_no_BP: if BP = "no" generate
           end if;
           if start_pixel_done = '0' then
              start_pixel_count <= start_pixel_count + 1;
-             if start_pixel_count = in_col then
+             if start_pixel_count = in_col + 1  then
                 start_pixel_done <= '1';
              end if;
           end if;
@@ -275,8 +300,8 @@ gen_no_BP: if BP = "no" generate
        else
           --start_sof_done <= '0';
        end if;
-       en_count(EN_BIT)  <= en_in and start_pixel_done;
-       en_count(SOF_BIT) <= start_sof_done ; --en_end3(SOF_BIT);
+       --en_count(EN_BIT)  <= en_in; -- and start_pixel_done;
+       --en_count(SOF_BIT) <= start_sof_done ; --en_end3(SOF_BIT);
     end if;
   end process conv_ctr;
 start_sof_done <= '1' when row_num  = 0 and col_num   = 0 else '0';
@@ -334,121 +359,136 @@ start_sof_done <= '1' when row_num  = 0 and col_num   = 0 else '0';
        data2conv7 <= (others => '0');
        data2conv8 <= (others => '0');
        data2conv9 <= (others => '0');
-       en2conv    <= (others => '0');      
+       sof_out    <= '0';
+       --en2conv    <= (others => '0');      
     elsif rising_edge(clk) then   
-       if line_first = '1' and pixel_first = '1'  then
+       --if line_first = '1' and pixel_first = '1'  then
+       if firstlast_mid2(LIN_FST) = '1' and firstlast_mid2(PIX_FST) = '1'  then 
 
-          data2conv1 <= d_in1  ;
-          data2conv2 <= d_in2  ;
+          data2conv19 <= d_in1  ;
+          data2conv28 <= d_in2  ;
+          data2conv37 <= (others => '0');
+
+          data2conv46 <= d_mid1 ;
+          data2conv64 <= (others => '0');
+
+          data2conv73 <= (others => '0');
+          data2conv82 <= (others => '0');
+          data2conv91 <= (others => '0');
+
+       --elsif line_first = '1' and pixel_last = '1' then
+       elsif firstlast_mid2(LIN_FST) = '1' and firstlast_mid2(PIX_LST) = '1' then
+
+          data2conv19 <= (others => '0');
+          data2conv28 <= d_in2;
+          data2conv37 <= d_in3;
+
+          data2conv46 <= (others => '0');
+          data2conv64 <= d_mid3;
+
+          data2conv73 <= (others => '0');
+          data2conv82 <= (others => '0');
+          data2conv91 <= (others => '0');
+
+       --elsif line_first = '1' then
+       elsif firstlast_mid2(LIN_FST) = '1' then
+
+          data2conv19 <= d_in1  ;
+          data2conv28 <= d_in2  ;
+          data2conv37 <= d_in3  ;
+
+          data2conv6 <= d_mid1 ;
+          data2conv4 <= d_mid3 ;
+
           data2conv3 <= (others => '0');
-
-          data2conv4 <= d_mid1 ;
-          data2conv6 <= (others => '0');
-
-          data2conv7 <= (others => '0');
-          data2conv8 <= (others => '0');
-          data2conv9 <= (others => '0');
-
-       elsif line_first = '1' and pixel_last = '1' then
-
-          data2conv1 <= (others => '0');
-          data2conv2 <= d_in2;
-          data2conv3 <= d_in3;
-
-          data2conv4 <= (others => '0');
-          data2conv6 <= d_mid3;
-
-          data2conv7 <= (others => '0');
-          data2conv8 <= (others => '0');
-          data2conv9 <= (others => '0');
-
-       elsif line_first = '1' then
-
-          data2conv1 <= d_in1  ;
-          data2conv2 <= d_in2  ;
-          data2conv3 <= d_in3  ;
-
-          data2conv4 <= d_mid1 ;
-          data2conv6 <= d_mid3 ;
-
-          data2conv7 <= (others => '0');
-          data2conv8 <= (others => '0');
-          data2conv9 <= (others => '0');
-
-       elsif line_last = '1' and pixel_first = '1'  then
-
-          data2conv1 <= (others => '0');
           data2conv2 <= (others => '0');
-          data2conv3 <= (others => '0');
-
-          data2conv4 <= d_mid1 ;
-          data2conv6 <= (others => '0');
-
-          data2conv7 <= d_end1;
-          data2conv8 <= d_end2;
-          data2conv9 <= (others => '0'); 
-
-       elsif line_last = '1' and pixel_last = '1' then
-
           data2conv1 <= (others => '0');
-          data2conv2 <= (others => '0');
-          data2conv3 <= (others => '0'); 
 
+       --elsif line_last = '1' and pixel_first = '1'  then
+       elsif firstlast_mid2(LIN_LST) = '1' and firstlast_mid2(PIX_FST) = '1'  then
+
+          data2conv19 <= (others => '0');
+          data2conv28 <= (others => '0');
+          data2conv37 <= (others => '0');
+
+          data2conv6 <= d_mid1 ;
           data2conv4 <= (others => '0');
-          data2conv6 <= d_mid3;
+
+          data2conv3 <= d_end1;
+          data2conv2 <= d_end2;
+          data2conv1 <= (others => '0'); 
+
+       --elsif line_last = '1' and pixel_last = '1' then
+       elsif firstlast_mid2(LIN_LST) = '1' and firstlast_mid2(PIX_LST) = '1' then
+
+          data2conv19 <= (others => '0');
+          data2conv28 <= (others => '0');
+          data2conv37 <= (others => '0'); 
+
+          data2conv6 <= (others => '0');
+          data2conv4 <= d_mid3;
 
           data2conv7 <= (others => '0');
           data2conv8 <= d_end2;
           data2conv9 <= d_end3; 
 
-       elsif line_last = '1' then
-          data2conv1 <= (others => '0');
-          data2conv2 <= (others => '0');
-          data2conv3 <= (others => '0');
+       --elsif line_last = '1' then
+       elsif firstlast_mid2(LIN_LST)  = '1' then
+          data2conv19 <= (others => '0');
+          data2conv28 <= (others => '0');
+          data2conv37 <= (others => '0');
 
-          data2conv4 <= d_mid1 ;
-          data2conv6 <= d_mid3 ;
+          data2conv6 <= d_mid1 ;
+          data2conv4 <= d_mid3 ;
 
           data2conv7 <= d_end1;
           data2conv8 <= d_end2;
           data2conv9 <= d_end3; 
 
-       elsif pixel_first = '1' then
-          data2conv1 <= d_in1  ;
-          data2conv2 <= d_in2  ;
-          data2conv3 <= (others => '0')  ;
+       --elsif pixel_first = '1' then
+       elsif firstlast_mid2(PIX_FST) = '1' then
+          data2conv19 <= d_in1  ;
+          data2conv28 <= d_in2  ;
+          data2conv37 <= (others => '0')  ;
 
-          data2conv4 <= d_mid1 ;
-          data2conv6 <= (others => '0');
+          data2conv6 <= d_mid1 ;
+          data2conv4 <= (others => '0');
 
           data2conv7 <= d_end1;
           data2conv8 <= d_end2;
           data2conv9 <= (others => '0');
 
-       elsif pixel_last = '1' then
-          data2conv1 <= (others => '0')  ;
-          data2conv2 <= d_in2  ;
-          data2conv3 <= d_in3  ;
+       --elsif pixel_last = '1' then
+       elsif firstlast_mid2(PIX_LST) = '1' then
+          data2conv19 <= (others => '0')  ;
+          data2conv28 <= d_in2  ;
+          data2conv37 <= d_in3  ;
 
-          data2conv4 <= (others => '0');
-          data2conv6 <= d_mid3 ;
+          data2conv6 <= (others => '0');
+          data2conv4 <= d_mid3 ;
 
           data2conv7 <= (others => '0');
           data2conv8 <= d_end2;
           data2conv9 <= d_end3;
 
        else
-          data2conv1 <= d_in1  ;
-          data2conv2 <= d_in2  ;
-          data2conv3 <= d_in3  ;
-          data2conv4 <= d_mid1 ;
-          data2conv6 <= d_mid3 ;
+          data2conv19 <= d_in1  ;
+          data2conv28 <= d_in2  ;
+          data2conv37 <= d_in3  ;
+          data2conv6 <= d_mid1 ;
+          data2conv4 <= d_mid3 ;
           data2conv7 <= d_end1;
           data2conv8 <= d_end2;
           data2conv9 <= d_end3; 
        end if;
        data2conv5 <= d_mid2 ;
-       en2conv    <= en_count;
+       en_out     <= en_in and start_pixel_done;
+       if start_pixel_done = '1' then
+          sof_out    <= firstlast_mid2(PIX_SOF);
+       else
+          sof_out    <= '0';
+       end if;
+       --en2conv    <= en_count;
     end if;
   end process samp_conv;
 
