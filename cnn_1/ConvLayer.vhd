@@ -180,6 +180,8 @@ signal data2conv9 : std_logic_vector (N-1 downto 0);
 signal en_s       : std_logic;
 signal sof_s      : std_logic;
 
+signal w_in_s     : std_logic_vector(M-1 downto 0);
+signal w_num_s    : std_logic_vector(  3 downto 0);
 signal w_unit_en  : std_logic_vector (CL_units-1 downto 0);
 signal w_unit_ni  : integer;
 
@@ -192,17 +194,25 @@ begin
 
 w_unit_ni <= conv_integer(unsigned('0' & w_unit_n));
 
-w_en_p : process (w_unit_ni)
+w_en_p : process (clk,rst)
+--w_en_p : process (w_unit_ni)
 begin
-   For I in 0 to CL_units-1 loop
-       if w_en = '1' then
-          if w_unit_ni = i then 
-             w_unit_en(i) <= '1';
-          else 
-             w_unit_en(i) <= '0';
-          end if;
-       end if;
-   end loop;
+   if rst = '1' then
+       w_unit_en     <= (others => '0');
+   elsif rising_edge(clk) then
+      w_in_s   <= w_in ;
+      w_num_s  <= w_num;
+
+      For I in 0 to CL_units-1 loop
+         if w_en = '1' then
+            if w_unit_ni = i then 
+               w_unit_en(i) <= '1';
+            else 
+               w_unit_en(i) <= '0';
+            end if;
+         end if;
+      end loop;
+   end if;
 end process w_en_p;
 
 CL_d_g: ConvLayer_data_gen 
@@ -247,8 +257,8 @@ CL_w_g:  ConvLayer_weight_gen
            clk        => clk       ,
            rst        => rst       , 
 
-           w_in       => w_in      ,
-           w_num      => w_num     ,
+           w_in       => w_in_s    ,
+           w_num      => w_num_s   ,
            w_en       => w_unit_en(i)   ,
 
            w1         => w1(i)     ,
@@ -326,7 +336,11 @@ sof_out <= sof_out1(0);
        count     <= (others => '0');
     elsif rising_edge(clk) then
        d_out <= d_out1(conv_integer('0' & count));
-       count <= count + 1;
+       if count = CL_units - 1 then
+          count <= (others => '0');
+       else
+          count <= count + 1;
+       end if;
     end if;
   end process p_out;
 

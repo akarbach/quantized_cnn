@@ -103,18 +103,19 @@ process
      wait for 10 ns; en_in <= '1'; d_in <= conv_std_logic_vector( 2, d_in'length); --sof_in <= '0';
      wait for 10 ns; en_in <= '1'; d_in <= conv_std_logic_vector( 3, d_in'length);
      wait for 10 ns; en_in <= '1'; d_in <= conv_std_logic_vector( 4, d_in'length);
+
      wait for 10 ns; en_in <= '1'; d_in <= conv_std_logic_vector( 3, d_in'length);
      wait for 10 ns; en_in <= '1'; d_in <= conv_std_logic_vector( 2, d_in'length);
-     wait for 10 ns; en_in <= '1'; d_in <= conv_std_logic_vector( 1, d_in'length);
+     wait for 10 ns; en_in <= '1'; d_in <= conv_std_logic_vector( 4, d_in'length);
      wait for 10 ns; en_in <= '1'; d_in <= conv_std_logic_vector( 3, d_in'length);
 
      wait for 10 ns; en_in <= '0'; d_in <= conv_std_logic_vector( 0, d_in'length);
 -- Line 2
      wait for 10 ns; en_in <= '1'; d_in <= conv_std_logic_vector( 1, d_in'length);
-     wait for 10 ns; en_in <= '1'; d_in <= conv_std_logic_vector( 12, d_in'length);
-     wait for 10 ns; en_in <= '1'; d_in <= conv_std_logic_vector( 3, d_in'length);
-     wait for 10 ns; en_in <= '1'; d_in <= conv_std_logic_vector( 4, d_in'length);
      wait for 10 ns; en_in <= '1'; d_in <= conv_std_logic_vector( 5, d_in'length);
+     wait for 10 ns; en_in <= '1'; d_in <= conv_std_logic_vector( 3, d_in'length);
+     wait for 10 ns; en_in <= '1'; d_in <= conv_std_logic_vector( 8, d_in'length);
+     wait for 10 ns; en_in <= '1'; d_in <= conv_std_logic_vector( 4, d_in'length);
      wait for 10 ns; en_in <= '1'; d_in <= conv_std_logic_vector( 6, d_in'length);
      wait for 10 ns; en_in <= '1'; d_in <= conv_std_logic_vector( 17, d_in'length);
      wait for 10 ns; en_in <= '1'; d_in <= conv_std_logic_vector( 18, d_in'length);

@@ -28,10 +28,10 @@ architecture a of Pooling is
 constant EN_BIT  : integer range 0 to 1 := 0;
 constant SOF_BIT : integer range 0 to 1 := 1;
 
-signal d_in1,   d_in2,   d_in3   : std_logic_vector (N-1 downto 0);
+--signal d_in1,   d_in2,   d_in3   : std_logic_vector (N-1 downto 0);
 --signal d_mid1,  d_mid2,  d_mid3  : std_logic_vector (N-1 downto 0);
 --signal d_end1,  d_end2,  d_end3  : std_logic_vector (N-1 downto 0);
-signal en_in1,  en_in2,  en_in3  : std_logic_vector(1 downto 0);
+--signal en_in1,  en_in2,  en_in3  : std_logic_vector(1 downto 0);
 --signal en_mid1, en_mid2, en_mid3 : std_logic_vector(1 downto 0);
 --signal en_end1, en_end2, en_end3 : std_logic_vector(1 downto 0);
 
@@ -72,38 +72,38 @@ signal max_new           : std_logic_vector (N-1 downto 0);
 signal max_line          : std_logic_vector (N-1 downto 0);
 signal max_2mem          : std_logic_vector (N-1 downto 0);
 
-signal p_index           : integer;
+--signal p_index           : integer;
 
 begin
 
 
--- 3 input samples
-
-  p_insamp1 : process (clk)
-  begin
-    if rising_edge(clk) then
-       if en_in = '1' then
-          d_in1  <= d_in  ;
-          d_in2  <= d_in1 ;
-          d_in3  <= d_in2 ;
-       end if;
-    end if;
-  end process p_insamp1;
-
-
-  p_insamp2 : process (clk,rst)
-  begin
-    if rst = '1' then
-       en_in1  <= (others => '0');
-       en_in2  <= (others => '0');
-       en_in3  <= (others => '0');
-    elsif rising_edge(clk) then
-       en_in1(EN_BIT)  <= en_in;
-       en_in1(SOF_BIT) <= sof_in;
-       en_in2  <= en_in1;
-       en_in3  <= en_in2;
-    end if;
-  end process p_insamp2;
+---- 3 input samples
+--
+--  p_insamp1 : process (clk)
+--  begin
+--    if rising_edge(clk) then
+--       if en_in = '1' then
+--          d_in1  <= d_in  ;
+--          d_in2  <= d_in1 ;
+--          d_in3  <= d_in2 ;
+--       end if;
+--    end if;
+--  end process p_insamp1;
+--
+--
+--  p_insamp2 : process (clk,rst)
+--  begin
+--    if rst = '1' then
+--       en_in1  <= (others => '0');
+--       en_in2  <= (others => '0');
+--       en_in3  <= (others => '0');
+--    elsif rising_edge(clk) then
+--       en_in1(EN_BIT)  <= en_in;
+--       en_in1(SOF_BIT) <= sof_in;
+--       en_in2  <= en_in1;
+--       en_in3  <= en_in2;
+--    end if;
+--  end process p_insamp2;
 
 -- input pixel counter
   p_mem_ctr : process (clk,rst)
@@ -147,21 +147,21 @@ begin
 
 
 -- Memory control
--- Stage 1 old max value mem read
--- Stage 2 compare max_old and all data_in -s
--- Stage 3 new max value mem write
   p_mem1 : process (clk)
   begin
     if rising_edge(clk) then
-       --if read_old_max = '1' then
+       if conv_integer('0' & row_num(P-1 downto 0)) = 0 then  -- first line in cluster
+          max_old <= (max_old'left => '1', others => '0');    -- minimum 2th compliment value
+        else
           max_old <= mem_line1(conv_integer(addr_rd));     
-       --end if;
+       end if;
        if write_new_max = '1' then
           mem_line1(conv_integer(addr_wr)) <= max_2mem; 
        end if;
     end if;
   end process p_mem1;
 addr_rd <= '0' & col_num(col_num'left downto P);
+addr_wr <= '0' & col_num(col_num'left downto P);
 
   p_mem2 : process (clk,rst)
   begin
@@ -170,7 +170,7 @@ addr_rd <= '0' & col_num(col_num'left downto P);
     elsif rising_edge(clk) then
       if (col_num(P-1  downto 0) + 1) = 0 then
         write_new_max <= '1';
-        addr_wr <= '0' & col_num(col_num'left downto P);
+
       else
         write_new_max <= '0';
       end if;
@@ -178,7 +178,7 @@ addr_rd <= '0' & col_num(col_num'left downto P);
   end process p_mem2;
 
 
-p_index <= conv_integer(col_num(P-1 downto 0));   
+                   --p_index <= conv_integer(col_num(P-1 downto 0));   
 -- Data comparison
   p_data_comp : process (clk)
   begin
@@ -199,28 +199,28 @@ p_index <= conv_integer(col_num(P-1 downto 0));
 
 
 
-  p_data_comp2 : process (max_new, max_old) --, row_num_d,col_num )
-  begin
-  --   if row_num(P - 1 downto 0) = (2**P - 1) then -- last line in cluster
-  --     max_2mem <= (max_2mem'left => '1', others => '0');
-      --if max_old > max_new then
-      --  d_out <= max_old;
-      --else
-      --  d_out <= max_new;
-      --end if;
-      --if (col_num_d(P-1  downto 0) + 1) = 0 then
-      --  en_out  <= '1';
-      --else
-      --  en_out  <= '0';
-      --end if;
-   --  else
-       if max_old > max_new then
-         max_line <= max_old;
-       else
-         max_line <= max_new;
-       end if;
-   --  end if;
-  end process p_data_comp2;
+  --p_data_comp2 : process (max_new, max_old) --, row_num_d,col_num )
+  --begin
+  ----   if row_num(P - 1 downto 0) = (2**P - 1) then -- last line in cluster
+  ----     max_2mem <= (max_2mem'left => '1', others => '0');
+  --    --if max_old > max_new then
+  --    --  d_out <= max_old;
+  --    --else
+  --    --  d_out <= max_new;
+  --    --end if;
+  --    --if (col_num_d(P-1  downto 0) + 1) = 0 then
+  --    --  en_out  <= '1';
+  --    --else
+  --    --  en_out  <= '0';
+  --    --end if;
+  -- --  else
+  --     if max_old > max_new then
+  --       max_line <= max_old;
+  --     else
+  --       max_line <= max_new;
+  --     end if;
+  -- --  end if;
+  --end process p_data_comp2;
 
 -- reset memory
   p_data_comp3 : process (max_line, row_num_d) --, row_num_d,col_num )

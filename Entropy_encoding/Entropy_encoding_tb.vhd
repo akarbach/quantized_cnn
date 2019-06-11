@@ -5,7 +5,8 @@ use IEEE.STD_LOGIC_SIGNED.ALL;
 
 entity Entropy_encoding_tb is
     generic (
-           mult_sum      : string := "sum";
+           mult_sum_CL   : string := "sum";
+           mult_sum_PCA  : string := "mult";
            N             : integer :=   8; -- input data width
            Huff_wid      : integer :=  12; -- Huffman weight width                        (after change need nedd to update "Huff_code" matrix)
            Wh            : integer :=  16; -- Huffman unit output data width (Note W>=M)
@@ -13,7 +14,7 @@ entity Entropy_encoding_tb is
            depth         : integer :=  64; -- buffer depth
            burst         : integer :=  10;  -- buffer read burst
 
-           PCA_en        : boolean := FALSE; --TRUE; -- PCA Enable/Bypass
+           PCA_en        : boolean := TRUE; --TRUE; -- PCA Enable/Bypass
            Huff_enc_en   : boolean := TRUE; --TRUE; -- Huffman encoder Enable/Bypass
 
            in_row        : integer := 20;
@@ -25,7 +26,8 @@ architecture Entropy_encoding_tb of Entropy_encoding_tb is
 
 component Entropy_encoding is
   generic (
-           mult_sum      : string := "sum";
+           mult_sum_CL   : string := "sum";
+           mult_sum_PCA  : string := "mult";
            N             : integer :=   8; -- input data width
            Huff_wid      : integer :=  12; --  Huffman weight width
            Wh            : integer :=  16; -- Huffman unit output data width (Note W>=M)
@@ -44,8 +46,8 @@ component Entropy_encoding is
            rst     : in std_logic;
 
            pca_w_en  : in  std_logic;
-           pca_w_num : in  std_logic_vector (5 downto 0);
-           pca_w_in  : in  std_logic_vector (8 downto 0);
+           pca_w_num : in  std_logic_vector (6 downto 0);
+           pca_w_in  : in  std_logic_vector (7 downto 0);
 
            d_in    : in std_logic_vector (N-1 downto 0);
            en_in   : in std_logic;
@@ -63,8 +65,8 @@ end component;
 signal clk     : std_logic;
 signal rst     : std_logic;
 signal pca_w_en  : std_logic;
-signal pca_w_num : std_logic_vector (5 downto 0);
-signal pca_w_in  : std_logic_vector (8 downto 0);
+signal pca_w_num : std_logic_vector (6 downto 0);
+signal pca_w_in  : std_logic_vector (7 downto 0);
 signal d_in    : std_logic_vector (N-1 downto 0);
 signal en_in   : std_logic;
 signal sof_in  : std_logic; -- start of frame
@@ -79,7 +81,8 @@ signal sof_out : std_logic; -- start of frame
 begin
 
 DUT: Entropy_encoding generic map (
-      mult_sum => mult_sum,
+      mult_sum_CL  => mult_sum_CL  , 
+      mult_sum_PCA => mult_sum_PCA ,
       N        => N       , -- input data width
       Huff_wid => Huff_wid, -- weight width
       Wh       => Wh      , -- Huffman unit output data width (Note W>=M)
@@ -125,32 +128,25 @@ process
 rst <= '1', '0' after 10 ns;
 
 
-process
-begin
-
-signal pca_w_en  : std_logic;
-signal pca_w_num : std_logic_vector (5 downto 0);
-signal pca_w_in  : std_logic_vector (8 downto 0);
-
-
-  pca_w_en <= '0';
-  pca_w_num <= (others => '0');
-  pca_w_in <= x"59"; 
-  wait until rst = '0';
-  while true loop
-    pca_w_en <= '1';
-    for i in 0 to 63 loop
-      pca_w_en  <= '1';
-      pca_w_num <= pca_w_num + 1;
-      pca_w_in  <= pca_w_in;    
-      --d_in <= conv_std_logic_vector(i - 127, d_in'length);    
-      wait until rising_edge(clk);
-      sof_in <= '0';
-    end loop;
-     pca_w_en <= '0';
-  end loop;
-end process;
-
+--process
+--begin
+--
+--  pca_w_en <= '0';
+--  pca_w_num <= (others => '0');
+--  pca_w_in <= x"59"; 
+--  wait until rst = '0';
+--  while true loop
+--    pca_w_en <= '1';
+--    for i in 0 to 63 loop
+--      pca_w_en  <= '1';
+--      pca_w_num <= pca_w_num + 1;
+--      pca_w_in  <= pca_w_in(6 downto 0) & (pca_w_in(7) xor pca_w_in(6));       
+--      wait until rising_edge(clk);
+--    end loop;
+--     pca_w_en <= '0';
+--  end loop;
+--end process;
+--
 
 
 

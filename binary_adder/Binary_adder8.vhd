@@ -30,7 +30,7 @@ component multROM is
            clk           : in  std_logic;
 
            ROM_addr      : in  std_logic_vector(15 downto 0);
-           ROM_data      : out std_logic_vector(15 downto 0)
+           ROM_data      : out std_logic_vector( 7 downto 0)
            );                        
 end component;
 
@@ -145,53 +145,54 @@ end process p_ands;
 --  end if;
 --end process p_adds;
 
--------------------------- ------
------  for 8 bit width -> Adder  |
--------------------------- ------
---
---p_adds : process (clk)
-----variable vparity           : std_logic;
---begin
---  if rising_edge(clk) then
---    MultiplierAnd07 <=  ("00" & '0' & MultiplierAnd0)                                      + ( "00" & MultiplierAnd1                                 &       '0') 
---                      + ("00" & MultiplierAnd2(MultiplierAnd2'left-1 downto 0) &     "00") + ( "00" & MultiplierAnd3(MultiplierAnd3'left-2 downto 0) &     "000")
---                      + ("00" & MultiplierAnd4(MultiplierAnd4'left-3 downto 0) &   "0000") + ( "00" & MultiplierAnd5(MultiplierAnd5'left-4 downto 0) &   "00000")
---                      + ("00" & MultiplierAnd6(MultiplierAnd6'left-5 downto 0) & "000000") + ( "00" & MultiplierAnd7(MultiplierAnd7'left-6 downto 0) & "0000000");
---    MultiplicandS4  <= MultiplicandS;
---    en4             <= en1;
---  end if;
---end process p_adds;
+------------------------ ------
+---  for 8 bit width -> Adder  |
+------------------------ ------
+
+p_adds : process (clk)
+--variable vparity           : std_logic;
+begin
+  if rising_edge(clk) then
+    MultiplierAnd07 <=  ("00" & '0' & MultiplierAnd0)                                      + ( "00" & MultiplierAnd1                                 &       '0') 
+                      + ("00" & MultiplierAnd2(MultiplierAnd2'left-1 downto 0) &     "00") + ( "00" & MultiplierAnd3(MultiplierAnd3'left-2 downto 0) &     "000")
+                      + ("00" & MultiplierAnd4(MultiplierAnd4'left-3 downto 0) &   "0000") + ( "00" & MultiplierAnd5(MultiplierAnd5'left-4 downto 0) &   "00000")
+                      + ("00" & MultiplierAnd6(MultiplierAnd6'left-5 downto 0) & "000000") + ( "00" & MultiplierAnd7(MultiplierAnd7'left-6 downto 0) & "0000000");
+    MultiplicandS4  <= MultiplicandS;
+    en4             <= en1;
+  end if;
+end process p_adds;
 
 -------------------------- ------
 -- end of for 8 bit width -> Adder  |
 -------------------------- ------
 
------------------------- ------
----  for 8 bit width ->  ROM   |
------------------------- ------
-ROM_addr <= MultiplicandM(7 downto 0) & MultiplierAnd0(7 downto 0);
-
-ROM_m: multROM
-port map (     
-      clk           => clk        ,
-      ROM_addr      => ROM_addr    ,
-      ROM_data      => MultiplierAnd07(15 downto 0)
-    );
-
-MultiplierAnd07(MultiplierAnd07'left downto 16) <= (others => '0');
-
 -------------------------- ------
--- end of for 8 bit width -> ROM  |
+-----  for 8 bit width ->  ROM   |
 -------------------------- ------
+--ROM_addr <= MultiplicandM(7 downto 0) & MultiplierAnd0(7 downto 0);
+--
+--ROM_m: multROM
+--port map (     
+--      clk           => clk        ,
+--      ROM_addr      => ROM_addr    ,
+--      ROM_data      => MultiplierAnd07(7 downto 0)
+--    );
+--
+--MultiplierAnd07(MultiplierAnd07'left downto 8) <= (others => '0');
+--
+--p_ram : process (clk)
+----variable vparity           : std_logic;
+--begin
+--  if rising_edge(clk) then
+--    MultiplicandS4  <= MultiplicandS;
+--    en4             <= en1;
+--  end if;
+--end process p_ram;
+---------------------------- ------
+---- end of for 8 bit width -> ROM  |
+---------------------------- ------
 
-p_ram : process (clk)
---variable vparity           : std_logic;
-begin
-  if rising_edge(clk) then
-    MultiplicandS4  <= MultiplicandS;
-    en4             <= en1;
-  end if;
-end process p_ram;
+
 
 --p_conv2signed : process (clk)
 ----variable vparity           : std_logic;

@@ -365,37 +365,37 @@ start_sof_done <= '1' when row_num  = 0 and col_num   = 0 else '0';
        --if line_first = '1' and pixel_first = '1'  then
        if firstlast_mid2(LIN_FST) = '1' and firstlast_mid2(PIX_FST) = '1'  then 
 
-          data2conv19 <= d_in1  ;
-          data2conv28 <= d_in2  ;
-          data2conv37 <= (others => '0');
+          data2conv9 <= d_in1  ;
+          data2conv8 <= d_in2  ;
+          data2conv7 <= (others => '0');
 
-          data2conv46 <= d_mid1 ;
-          data2conv64 <= (others => '0');
+          data2conv6 <= d_mid1 ;
+          data2conv4 <= (others => '0');
 
-          data2conv73 <= (others => '0');
-          data2conv82 <= (others => '0');
-          data2conv91 <= (others => '0');
+          data2conv3 <= (others => '0');
+          data2conv2 <= (others => '0');
+          data2conv1 <= (others => '0');
 
        --elsif line_first = '1' and pixel_last = '1' then
        elsif firstlast_mid2(LIN_FST) = '1' and firstlast_mid2(PIX_LST) = '1' then
 
-          data2conv19 <= (others => '0');
-          data2conv28 <= d_in2;
-          data2conv37 <= d_in3;
+          data2conv9 <= (others => '0');
+          data2conv8 <= d_in2;
+          data2conv7 <= d_in3;
 
-          data2conv46 <= (others => '0');
-          data2conv64 <= d_mid3;
+          data2conv6 <= (others => '0');
+          data2conv4 <= d_mid3;
 
-          data2conv73 <= (others => '0');
-          data2conv82 <= (others => '0');
-          data2conv91 <= (others => '0');
+          data2conv3 <= (others => '0');
+          data2conv2 <= (others => '0');
+          data2conv1 <= (others => '0');
 
        --elsif line_first = '1' then
        elsif firstlast_mid2(LIN_FST) = '1' then
 
-          data2conv19 <= d_in1  ;
-          data2conv28 <= d_in2  ;
-          data2conv37 <= d_in3  ;
+          data2conv9 <= d_in1  ;
+          data2conv8 <= d_in2  ;
+          data2conv7 <= d_in3  ;
 
           data2conv6 <= d_mid1 ;
           data2conv4 <= d_mid3 ;
@@ -407,9 +407,9 @@ start_sof_done <= '1' when row_num  = 0 and col_num   = 0 else '0';
        --elsif line_last = '1' and pixel_first = '1'  then
        elsif firstlast_mid2(LIN_LST) = '1' and firstlast_mid2(PIX_FST) = '1'  then
 
-          data2conv19 <= (others => '0');
-          data2conv28 <= (others => '0');
-          data2conv37 <= (others => '0');
+          data2conv9 <= (others => '0');
+          data2conv8 <= (others => '0');
+          data2conv7 <= (others => '0');
 
           data2conv6 <= d_mid1 ;
           data2conv4 <= (others => '0');
@@ -421,65 +421,65 @@ start_sof_done <= '1' when row_num  = 0 and col_num   = 0 else '0';
        --elsif line_last = '1' and pixel_last = '1' then
        elsif firstlast_mid2(LIN_LST) = '1' and firstlast_mid2(PIX_LST) = '1' then
 
-          data2conv19 <= (others => '0');
-          data2conv28 <= (others => '0');
-          data2conv37 <= (others => '0'); 
+          data2conv9 <= (others => '0');
+          data2conv8 <= (others => '0');
+          data2conv7 <= (others => '0'); 
 
           data2conv6 <= (others => '0');
           data2conv4 <= d_mid3;
 
-          data2conv7 <= (others => '0');
-          data2conv8 <= d_end2;
-          data2conv9 <= d_end3; 
+          data2conv3 <= (others => '0');
+          data2conv2 <= d_end2;
+          data2conv1 <= d_end3; 
 
        --elsif line_last = '1' then
        elsif firstlast_mid2(LIN_LST)  = '1' then
-          data2conv19 <= (others => '0');
-          data2conv28 <= (others => '0');
-          data2conv37 <= (others => '0');
+          data2conv9 <= (others => '0');
+          data2conv8 <= (others => '0');
+          data2conv7 <= (others => '0');
 
           data2conv6 <= d_mid1 ;
           data2conv4 <= d_mid3 ;
 
-          data2conv7 <= d_end1;
-          data2conv8 <= d_end2;
-          data2conv9 <= d_end3; 
+          data2conv3 <= d_end1;
+          data2conv2 <= d_end2;
+          data2conv1 <= d_end3; 
 
        --elsif pixel_first = '1' then
        elsif firstlast_mid2(PIX_FST) = '1' then
-          data2conv19 <= d_in1  ;
-          data2conv28 <= d_in2  ;
-          data2conv37 <= (others => '0')  ;
+          data2conv9 <= d_in1  ;
+          data2conv8 <= d_in2  ;
+          data2conv7 <= (others => '0')  ;
 
           data2conv6 <= d_mid1 ;
           data2conv4 <= (others => '0');
 
-          data2conv7 <= d_end1;
-          data2conv8 <= d_end2;
-          data2conv9 <= (others => '0');
+          data2conv3 <= d_end1;
+          data2conv2 <= d_end2;
+          data2conv1 <= (others => '0');
 
        --elsif pixel_last = '1' then
        elsif firstlast_mid2(PIX_LST) = '1' then
-          data2conv19 <= (others => '0')  ;
-          data2conv28 <= d_in2  ;
-          data2conv37 <= d_in3  ;
+          data2conv9 <= (others => '0')  ;
+          data2conv8 <= d_in2  ;
+          data2conv7 <= d_in3  ;
 
           data2conv6 <= (others => '0');
           data2conv4 <= d_mid3 ;
 
-          data2conv7 <= (others => '0');
-          data2conv8 <= d_end2;
-          data2conv9 <= d_end3;
+          data2conv3 <= (others => '0');
+          data2conv2 <= d_end2;
+          data2conv1 <= d_end3;
 
        else
-          data2conv19 <= d_in1  ;
-          data2conv28 <= d_in2  ;
-          data2conv37 <= d_in3  ;
+          data2conv9 <= d_in1  ;
+          data2conv8 <= d_in2  ;
+          data2conv7 <= d_in3  ;
           data2conv6 <= d_mid1 ;
           data2conv4 <= d_mid3 ;
-          data2conv7 <= d_end1;
-          data2conv8 <= d_end2;
-          data2conv9 <= d_end3; 
+          data2conv3 <= d_end1;
+          data2conv2 <= d_end2;
+          data2conv1 <= d_end3; 
        end if;
        data2conv5 <= d_mid2 ;
        en_out     <= en_in and start_pixel_done;

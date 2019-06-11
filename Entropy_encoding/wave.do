@@ -54,14 +54,48 @@ add wave -noupdate /entropy_encoding_tb/DUT/PCA_en
 add wave -noupdate /entropy_encoding_tb/DUT/cl_en_out
 add wave -noupdate /entropy_encoding_tb/DUT/pca_en_out
 add wave -noupdate -radix hexadecimal /entropy_encoding_tb/DUT/d01_out1
-add wave -noupdate -radix hexadecimal -childformat {{/entropy_encoding_tb/DUT/d01_out(19) -radix hexadecimal} {/entropy_encoding_tb/DUT/d01_out(18) -radix hexadecimal} {/entropy_encoding_tb/DUT/d01_out(17) -radix hexadecimal} {/entropy_encoding_tb/DUT/d01_out(16) -radix hexadecimal} {/entropy_encoding_tb/DUT/d01_out(15) -radix hexadecimal} {/entropy_encoding_tb/DUT/d01_out(14) -radix hexadecimal} {/entropy_encoding_tb/DUT/d01_out(13) -radix hexadecimal} {/entropy_encoding_tb/DUT/d01_out(12) -radix hexadecimal} {/entropy_encoding_tb/DUT/d01_out(11) -radix hexadecimal} {/entropy_encoding_tb/DUT/d01_out(10) -radix hexadecimal} {/entropy_encoding_tb/DUT/d01_out(9) -radix hexadecimal} {/entropy_encoding_tb/DUT/d01_out(8) -radix hexadecimal} {/entropy_encoding_tb/DUT/d01_out(7) -radix hexadecimal} {/entropy_encoding_tb/DUT/d01_out(6) -radix hexadecimal} {/entropy_encoding_tb/DUT/d01_out(5) -radix hexadecimal} {/entropy_encoding_tb/DUT/d01_out(4) -radix hexadecimal} {/entropy_encoding_tb/DUT/d01_out(3) -radix hexadecimal} {/entropy_encoding_tb/DUT/d01_out(2) -radix hexadecimal} {/entropy_encoding_tb/DUT/d01_out(1) -radix hexadecimal} {/entropy_encoding_tb/DUT/d01_out(0) -radix hexadecimal}} -subitemconfig {/entropy_encoding_tb/DUT/d01_out(19) {-radix hexadecimal} /entropy_encoding_tb/DUT/d01_out(18) {-radix hexadecimal} /entropy_encoding_tb/DUT/d01_out(17) {-radix hexadecimal} /entropy_encoding_tb/DUT/d01_out(16) {-radix hexadecimal} /entropy_encoding_tb/DUT/d01_out(15) {-radix hexadecimal} /entropy_encoding_tb/DUT/d01_out(14) {-radix hexadecimal} /entropy_encoding_tb/DUT/d01_out(13) {-radix hexadecimal} /entropy_encoding_tb/DUT/d01_out(12) {-radix hexadecimal} /entropy_encoding_tb/DUT/d01_out(11) {-radix hexadecimal} /entropy_encoding_tb/DUT/d01_out(10) {-radix hexadecimal} /entropy_encoding_tb/DUT/d01_out(9) {-radix hexadecimal} /entropy_encoding_tb/DUT/d01_out(8) {-radix hexadecimal} /entropy_encoding_tb/DUT/d01_out(7) {-radix hexadecimal} /entropy_encoding_tb/DUT/d01_out(6) {-radix hexadecimal} /entropy_encoding_tb/DUT/d01_out(5) {-radix hexadecimal} /entropy_encoding_tb/DUT/d01_out(4) {-radix hexadecimal} /entropy_encoding_tb/DUT/d01_out(3) {-radix hexadecimal} /entropy_encoding_tb/DUT/d01_out(2) {-radix hexadecimal} /entropy_encoding_tb/DUT/d01_out(1) {-radix hexadecimal} /entropy_encoding_tb/DUT/d01_out(0) {-radix hexadecimal}} /entropy_encoding_tb/DUT/d01_out
+add wave -noupdate -radix hexadecimal -childformat {{/entropy_encoding_tb/DUT/d01_out(19) -radix hexadecimal} {/entropy_encoding_tb/DUT/d01_out(18) -radix hexadecimal} {/entropy_encoding_tb/DUT/d01_out(17) -radix hexadecimal} {/entropy_encoding_tb/DUT/d01_out(16) -radix hexadecimal} {/entropy_encoding_tb/DUT/d01_out(15) -radix hexadecimal} {/entropy_encoding_tb/DUT/d01_out(14) -radix hexadecimal} {/entropy_encoding_tb/DUT/d01_out(13) -radix hexadecimal} {/entropy_encoding_tb/DUT/d01_out(12) -radix hexadecimal} {/entropy_encoding_tb/DUT/d01_out(11) -radix hexadecimal} {/entropy_encoding_tb/DUT/d01_out(10) -radix hexadecimal} {/entropy_encoding_tb/DUT/d01_out(9) -radix hexadecimal} {/entropy_encoding_tb/DUT/d01_out(8) -radix hexadecimal} {/entropy_encoding_tb/DUT/d01_out(7) -radix hexadecimal} {/entropy_encoding_tb/DUT/d01_out(6) -radix hexadecimal} {/entropy_encoding_tb/DUT/d01_out(5) -radix hexadecimal} {/entropy_encoding_tb/DUT/d01_out(4) -radix hexadecimal} {/entropy_encoding_tb/DUT/d01_out(3) -radix hexadecimal} {/entropy_encoding_tb/DUT/d01_out(2) -radix hexadecimal} {/entropy_encoding_tb/DUT/d01_out(1) -radix hexadecimal} {/entropy_encoding_tb/DUT/d01_out(0) -radix hexadecimal}} -subitemconfig {/entropy_encoding_tb/DUT/d01_out(19) {-height 16 -radix hexadecimal} /entropy_encoding_tb/DUT/d01_out(18) {-height 16 -radix hexadecimal} /entropy_encoding_tb/DUT/d01_out(17) {-height 16 -radix hexadecimal} /entropy_encoding_tb/DUT/d01_out(16) {-height 16 -radix hexadecimal} /entropy_encoding_tb/DUT/d01_out(15) {-height 16 -radix hexadecimal} /entropy_encoding_tb/DUT/d01_out(14) {-height 16 -radix hexadecimal} /entropy_encoding_tb/DUT/d01_out(13) {-height 16 -radix hexadecimal} /entropy_encoding_tb/DUT/d01_out(12) {-height 16 -radix hexadecimal} /entropy_encoding_tb/DUT/d01_out(11) {-height 16 -radix hexadecimal} /entropy_encoding_tb/DUT/d01_out(10) {-height 16 -radix hexadecimal} /entropy_encoding_tb/DUT/d01_out(9) {-height 16 -radix hexadecimal} /entropy_encoding_tb/DUT/d01_out(8) {-height 16 -radix hexadecimal} /entropy_encoding_tb/DUT/d01_out(7) {-height 16 -radix hexadecimal} /entropy_encoding_tb/DUT/d01_out(6) {-height 16 -radix hexadecimal} /entropy_encoding_tb/DUT/d01_out(5) {-height 16 -radix hexadecimal} /entropy_encoding_tb/DUT/d01_out(4) {-height 16 -radix hexadecimal} /entropy_encoding_tb/DUT/d01_out(3) {-height 16 -radix hexadecimal} /entropy_encoding_tb/DUT/d01_out(2) {-height 16 -radix hexadecimal} /entropy_encoding_tb/DUT/d01_out(1) {-height 16 -radix hexadecimal} /entropy_encoding_tb/DUT/d01_out(0) {-height 16 -radix hexadecimal}} /entropy_encoding_tb/DUT/d01_out
 add wave -noupdate -radix hexadecimal /entropy_encoding_tb/DUT/pca_d01_out
 add wave -noupdate /entropy_encoding_tb/DUT/Huff_enc_en
 add wave -noupdate -radix hexadecimal /entropy_encoding_tb/DUT/Huffman64_inst/d01_in
 add wave -noupdate -radix hexadecimal /entropy_encoding_tb/DUT/Huffman64_inst/h01_out
 add wave -noupdate /entropy_encoding_tb/DUT/Huffman64_inst/en_in
+add wave -noupdate /entropy_encoding_tb/DUT/w01_in
+add wave -noupdate /entropy_encoding_tb/DUT/w02_in
+add wave -noupdate /entropy_encoding_tb/DUT/w03_in
+add wave -noupdate /entropy_encoding_tb/DUT/w04_in
+add wave -noupdate /entropy_encoding_tb/DUT/w05_in
+add wave -noupdate /entropy_encoding_tb/DUT/w06_in
+add wave -noupdate /entropy_encoding_tb/DUT/w07_in
+add wave -noupdate /entropy_encoding_tb/DUT/w08_in
+add wave -noupdate /entropy_encoding_tb/DUT/w09_in
+add wave -noupdate /entropy_encoding_tb/DUT/w10_in
+add wave -noupdate /entropy_encoding_tb/DUT/w11_in
+add wave -noupdate /entropy_encoding_tb/DUT/w12_in
+add wave -noupdate /entropy_encoding_tb/DUT/w13_in
+add wave -noupdate /entropy_encoding_tb/DUT/w14_in
+add wave -noupdate /entropy_encoding_tb/DUT/w15_in
+add wave -noupdate /entropy_encoding_tb/DUT/w16_in
+add wave -noupdate /entropy_encoding_tb/DUT/w17_in
+add wave -noupdate /entropy_encoding_tb/DUT/w18_in
+add wave -noupdate /entropy_encoding_tb/DUT/w19_in
+add wave -noupdate /entropy_encoding_tb/DUT/w20_in
+add wave -noupdate /entropy_encoding_tb/DUT/w21_in
+add wave -noupdate /entropy_encoding_tb/DUT/w22_in
+add wave -noupdate /entropy_encoding_tb/DUT/w23_in
+add wave -noupdate /entropy_encoding_tb/DUT/w24_in
+add wave -noupdate /entropy_encoding_tb/DUT/w25_in
+add wave -noupdate /entropy_encoding_tb/DUT/w26_in
+add wave -noupdate /entropy_encoding_tb/DUT/w27_in
+add wave -noupdate /entropy_encoding_tb/DUT/w28_in
+add wave -noupdate /entropy_encoding_tb/DUT/w29_in
+add wave -noupdate /entropy_encoding_tb/DUT/w30_in
+add wave -noupdate /entropy_encoding_tb/DUT/w31_in
+add wave -noupdate /entropy_encoding_tb/pca_w_en
+add wave -noupdate /entropy_encoding_tb/pca_w_num
+add wave -noupdate /entropy_encoding_tb/pca_w_in
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {3895000 ps} 0}
+WaveRestoreCursors {{Cursor 1} {603598 ps} 0}
 quietly wave cursor active 1
 configure wave -namecolwidth 389
 configure wave -valuecolwidth 223
@@ -77,4 +111,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ps
 update
-WaveRestoreZoom {1254388 ps} {5197138 ps}
+WaveRestoreZoom {0 ps} {1065750 ps}

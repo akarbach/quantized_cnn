@@ -478,6 +478,8 @@ Buf62 : fifo generic map(depth=>depth, burst=>burst, Win=>Wh, Wout=>Wb) port map
 Buf63 : fifo generic map(depth=>depth, burst=>burst, Win=>Wh, Wout=>Wb) port map(clk =>clk, rst =>rst, enr =>b_rd(62), enw=>h63_en, data_in=>h63_out, data_out=>buff63_out, burst_r=>en_out(62), fifo_empty=> open, fifo_full=> open ); 
 Buf64 : fifo generic map(depth=>depth, burst=>burst, Win=>Wh, Wout=>Wb) port map(clk =>clk, rst =>rst, enr =>b_rd(63), enw=>h64_en, data_in=>h64_out, data_out=>buff64_out, burst_r=>en_out(63), fifo_empty=> open, fifo_full=> open ); 
 
+--b_rd <= x"0000000000000001"; -- one Huffman
+--d_out <= buff01_out;         -- one Huffman
 p_rd_ctr :     process (clk, rst)
 begin
    if ( rst = '1') then
