@@ -80,7 +80,7 @@ port (
        prod   :  out std_logic_vector(M+N-1 downto 0) );
 end component;
 
-signal     en_in1, en_end2, en_end3 : std_logic_vector(1 downto 0) ;
+signal     en_in1, en_end2, en_end3, en_sum : std_logic_vector(1 downto 0) ;
 --signal en_in1v,  en_in2v,  en_in3v  : std_logic_vector (N-1 downto 0);
 --signal en_mid1v, en_mid2v, en_mid3v : std_logic_vector (N-1 downto 0);
 --signal en_end1v, en_end2v, en_end3v : std_logic_vector (N-1 downto 0);
@@ -137,24 +137,24 @@ begin
 
 gen_no_BP: if BP = "no" and TP = "no" generate 
 
-  insamp2 : process (clk,rst)
-  begin
-    if rst = '1' then
-       en_in1  <= (others => '0');
-       en_end2 <= (others => '0');
-       en_end3 <= (others => '0');
-    elsif rising_edge(clk) then
-       if en_in = '1' then
-          en_in1(EN_BIT)  <= en_in;
-          en_in1(SOF_BIT) <= sof_in;
-
-
-          en_end2 <= en_in1;
-          --en_end3 <= en_end2;
-          en_end3 <= en_end2;
-       end if;
-    end if;
-  end process insamp2;
+--  insamp2 : process (clk,rst)
+--  begin
+--    if rst = '1' then
+--       en_in1  <= (others => '0');
+--       en_end2 <= (others => '0');
+--       en_end3 <= (others => '0');
+--    elsif rising_edge(clk) then
+--       --if en_in = '1' then
+--          en_in1(EN_BIT)  <= en_in;
+--          en_in1(SOF_BIT) <= sof_in;
+--
+--
+--          en_end2 <= en_in1;
+--          --en_end3 <= en_end2;
+--          en_end3 <= en_end2;
+--       --end if;
+--    end if;
+--  end process insamp2;
 
 gen_Mults: if mult_sum = "mult" generate 
 -- convolution
@@ -173,6 +173,17 @@ gen_Mults: if mult_sum = "mult" generate
  
     end if;
   end process p_conv_oper;
+
+  p_mult : process (clk,rst)
+  begin
+    if rst = '1' then
+       en_in1  <= (others => '0');
+    elsif rising_edge(clk) then
+       en_in1(EN_BIT)  <= en_in;
+       en_in1(SOF_BIT) <= sof_in;
+    end if;
+  end process p_mult;
+
 end generate;  -- mult
 
 gen_Adds: if mult_sum = "sum" generate 
@@ -197,6 +208,17 @@ gen_Adds: if mult_sum = "sum" generate
   A8: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv8,  b  => w8,  prod => c08);
   A9: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv9,  b  => w9,  prod => c09);
 
+  p_mult : process (clk,rst)
+  begin
+    if rst = '1' then
+       en_sum  <= (others => '0');
+       en_in1  <= (others => '0');
+    elsif rising_edge(clk) then
+       en_sum(EN_BIT)  <= en_in;
+       en_sum(SOF_BIT) <= sof_in;
+       en_in1          <= en_sum;
+    end if;
+  end process p_mult;
 
 end generate; -- sum
 
@@ -213,13 +235,23 @@ end generate; -- sum
     end if;
   end process p_conv_oper;
 
+  insamp2 : process (clk,rst)
+  begin
+    if rst = '1' then
+       en_end2 <= (others => '0');
+       en_end3 <= (others => '0');
+    elsif rising_edge(clk) then
+       en_end2 <= en_in1;
+       en_end3 <= en_end2;
+    end if;
+  end process insamp2;
 
   p_relu : process (clk)
   begin
     if rising_edge(clk) then
       if Relu = "yes" then
          relu_for: for i in 0 to c13'length-1  loop
-           d_relu(i) <= c13(i) and not c13(c13'left);
+           d_relu(i) <= c13(i) and not c13(c13'left);    -- if MSB=1 (negative) thwen all bits are 0
          end loop relu_for;
       else
          d_relu <= c13;
@@ -281,7 +313,7 @@ gen_TP_out: if BP = "no" and TP = "yes" generate
 end generate; -- TP = "yes"
 
 gen_BP: if BP = "yes" generate 
- process (data2conv1)
+ process (data2conv1, en_in, sof_in)
  begin
     if d_out'left > data2conv1'left then
        d_out(data2conv1'left downto 0)   <= data2conv1(data2conv1'left downto 0);
@@ -291,9 +323,9 @@ gen_BP: if BP = "yes" generate
     else
        d_out <= data2conv1(d_out'left downto 0);
     end if;
+    en_out  <= en_in;
+    sof_out <= sof_in;
  end process ;
-  en_out  <= en_in;
-  sof_out <= sof_in;
 
 end generate; --  BP = "yes"
 

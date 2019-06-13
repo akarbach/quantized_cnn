@@ -315,8 +315,7 @@ CL_w_g:  ConvLayer_weight_gen
 
 end generate gen_CL;
 
-en_out  <= en_out1(0);
-sof_out <= sof_out1(0);
+
 
 --process (d_out1)
 --  variable TMP : std_logic_vector (W-1 downto 0);
@@ -341,6 +340,8 @@ sof_out <= sof_out1(0);
        else
           count <= count + 1;
        end if;
+       en_out  <= en_out1(0);
+       sof_out <= sof_out1(0);
     end if;
   end process p_out;
 

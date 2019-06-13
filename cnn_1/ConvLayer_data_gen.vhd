@@ -250,11 +250,11 @@ gen_no_BP: if BP = "no" generate
         --start_sof_done    <= '0';
     elsif rising_edge(clk) then
        if en_in = '1' then
-          if en_mid1(SOF_BIT) = '1' then
-             row_num   <= 0;
-             col_num   <= 0;
-             --en_count  <= '1';
-          else
+          --if en_mid1(SOF_BIT) = '1' then
+          --   row_num   <= 0;
+          --   col_num   <= 0;
+          --   --en_count  <= '1';
+          --else
              --en_count(EN_BIT)   <= '0';
              if col_num =  in_col -1 then
                 col_num <= 0;
@@ -268,7 +268,7 @@ gen_no_BP: if BP = "no" generate
              else
                 col_num <= col_num + 1;
              end if;
-          end if;
+          --end if;
           if start_pixel_done = '0' then
              start_pixel_count <= start_pixel_count + 1;
              if start_pixel_count = in_col + 1  then
