@@ -259,6 +259,15 @@ end generate; -- sum
     end if;
   end process p_relu;
 
+--  p_relu : process (clk,rst)
+--  begin
+--     if rst = '1' then
+--       d_relu <= (others => '0');
+--    elsif rising_edge(clk) then
+--       d_relu <= d_relu + 1;
+--    end if;
+--  end process p_relu;
+
   p_relu_samp : process (clk,rst)
   begin
     if rst = '1' then
@@ -272,13 +281,28 @@ end generate; -- sum
    p_ovf : process (clk)
   begin
     if rising_edge(clk) then
-       if d_relu(d_relu'left downto W + SR ) = 0  then
-          d_ovf <= d_relu;
-       else
-          d_ovf <= (others => '1');
-       end if;
+       --if SR = 0 then
+       --   d_ovf <= d_relu;
+       --else
+          --if d_relu(d_relu'left  downto d_relu'left - SR ) = 0  then
+          if d_relu(d_relu'left  downto W + SR -2) = 0  then
+             d_ovf <= d_relu;
+          else
+             d_ovf( d_relu'left  downto W + SR -2 ) <= (others => '0'); 
+             d_ovf( W + SR - 3   downto         0 ) <= (others => '1'); 
+          end if;
+       --end if;
     end if;
   end process p_ovf;
+
+--  p_ovf : process (clk,rst)
+--  begin
+--     if rst = '1' then
+--       d_ovf <= (others => '0');
+--    elsif rising_edge(clk) then
+--       d_ovf <= d_ovf + 1;
+--    end if;
+--  end process p_ovf;
 
  p_ovf_samp : process (clk,rst)
   begin
@@ -291,7 +315,7 @@ end generate; -- sum
 
 en_out  <= en_ovf(EN_BIT);
 sof_out <= en_ovf(SOF_BIT);
-d_out   <= d_ovf (W + SR - 1 downto SR);
+d_out   <= d_ovf (W + SR -1  downto SR); --(5 downto 1); --(W + SR -1  downto SR );
 
 end generate; -- BP = "no" and TP = "no"
 
@@ -313,19 +337,34 @@ gen_TP_out: if BP = "no" and TP = "yes" generate
 end generate; -- TP = "yes"
 
 gen_BP: if BP = "yes" generate 
- process (data2conv1, en_in, sof_in)
- begin
-    if d_out'left > data2conv1'left then
+ --process (data2conv1, en_in, sof_in)
+ --begin
+ --   --if d_out'left > data2conv1'left then
+ --   ----if W > N then
+ --   --   d_out(data2conv1'left downto 0)   <= data2conv1(data2conv1'left downto 0);
+ --   --   d_out(d_out'left downto data2conv1'left + 1) <= (others => '0');
+ --   --elsif d_out'left = data2conv1'left then
+ --   --   d_out <= data2conv1;
+ --   --else
+ --   --   d_out <= data2conv1(d_out'left downto 0);
+ --   --end if;
+ --end process ;
+    Out_w: if d_out'left > data2conv1'left generate
        d_out(data2conv1'left downto 0)   <= data2conv1(data2conv1'left downto 0);
        d_out(d_out'left downto data2conv1'left + 1) <= (others => '0');
-    elsif d_out'left = data2conv1'left then
+    end generate Out_w;
+
+    InOut_e: if d_out'left = data2conv1'left generate
        d_out <= data2conv1;
-    else
+    end generate InOut_e;
+
+    In_w: if d_out'left < data2conv1'left generate
        d_out <= data2conv1(d_out'left downto 0);
-    end if;
+    end generate In_w;
+
     en_out  <= en_in;
     sof_out <= sof_in;
- end process ;
+ --end process ;
 
 end generate; --  BP = "yes"
 

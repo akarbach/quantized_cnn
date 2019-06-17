@@ -16,7 +16,7 @@ entity ConvLayer is
            N             : integer := W; -- input data width
            M             : integer := W; -- input weight width
            --W             : integer := 8; -- output data width      (Note, W+SR <= N+M+4)
-           SR            : integer := 2; -- data shift right before output
+           SR            : integer := 0; -- data shift right before output (deleted LSBs)
            --bpp           : integer := 8; -- bit per pixel
   	       in_row        : integer := 114;
   	       in_col        : integer := 114
