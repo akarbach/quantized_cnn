@@ -56,22 +56,26 @@ constant col_bits: integer := integer(CEIL(LOG2(Real(in_col))));
 --constant row_bits: integer := integer(LOG2(Real(in_row)));
 --constant col_bits: integer := integer(LOG2(Real(in_col)));
 
-signal row_num           : std_logic_vector (row_bits-1 downto 0);
-signal col_num           : std_logic_vector (col_bits-1 downto 0);
-signal addr_wr           : std_logic_vector (col_bits   downto P);
-signal addr_rd           : std_logic_vector (col_bits   downto P);
-signal row_num_d         : std_logic_vector (row_bits-1 downto 0);
-signal col_num_d         : std_logic_vector (row_bits-1 downto 0);
+signal row_num            : std_logic_vector (row_bits-1 downto 0);
+signal col_num            : std_logic_vector (col_bits-1 downto 0);
+signal addr_wr            : std_logic_vector (col_bits   downto P);
+signal addr_rd            : std_logic_vector (col_bits   downto P);
+signal row_num_d          : std_logic_vector (row_bits-1 downto 0);
+signal row_num_d2         : std_logic_vector (row_bits-1 downto 0);
+signal col_num_d          : std_logic_vector (col_bits-1 downto 0);
 --signal row_pol           : natural range 0 to in_row/P;
 --signal col_pol           : natural range 0 to in_col/P;
 
 signal read_old_max      : std_logic;
 signal write_new_max     : std_logic;
+signal write_new_max_d   : std_logic;
 signal max_old           : std_logic_vector (N-1 downto 0);
 signal max_new           : std_logic_vector (N-1 downto 0);
 signal max_line          : std_logic_vector (N-1 downto 0);
 signal max_2mem          : std_logic_vector (N-1 downto 0);
+signal max_2mem_d        : std_logic_vector (N-1 downto 0);
 
+signal col_num_cluster   : std_logic_vector (P-1 downto 0);
 --signal p_index           : integer;
 
 begin
@@ -151,34 +155,38 @@ begin
   begin
     if rising_edge(clk) then
        if conv_integer('0' & row_num(P-1 downto 0)) = 0 then  -- first line in cluster
-          max_old <= (max_old'left => '1', others => '0');    -- minimum 2th compliment value
+          max_old(max_old'left)              <=            '1' ;    -- minimum 2th compliment value
+          max_old(max_old'left - 1 downto 0) <= (others => '0');    -- minimum 2th compliment value
         else
-          max_old <= mem_line1(conv_integer(addr_rd));     
+          max_old <= mem_line1(conv_integer(addr_rd));         --second+ line in cluster   
        end if;
        if write_new_max = '1' then
-          mem_line1(conv_integer(addr_wr)) <= max_2mem; 
+          mem_line1(conv_integer(addr_wr)) <= max_2mem; --max_2mem; 
        end if;
     end if;
   end process p_mem1;
 addr_rd <= '0' & col_num(col_num'left downto P);
-addr_wr <= '0' & col_num(col_num'left downto P);
+addr_wr <= '0' & col_num_d(col_num'left downto P);
 
   p_mem2 : process (clk,rst)
   begin
     if rst = '1' then
-      write_new_max <= '0';
+      write_new_max   <= '0';
+      write_new_max_d <= '0';
     elsif rising_edge(clk) then
-      if (col_num(P-1  downto 0) + 1) = 0 then
+      if (col_num(P-1  downto 0) + 1) = 0  then -- and col_num_d /= col_num then
         write_new_max <= '1';
 
       else
         write_new_max <= '0';
       end if;
+      write_new_max_d <= write_new_max;
     end if;
   end process p_mem2;
 
 
                    --p_index <= conv_integer(col_num(P-1 downto 0));   
+col_num_cluster <= col_num(P-1 downto 0);
 -- Data comparison
   p_data_comp : process (clk)
   begin
@@ -197,6 +205,8 @@ addr_wr <= '0' & col_num(col_num'left downto P);
   end process p_data_comp;
 
 
+
+max_2mem <= max_new when max_new > max_old else   max_old;
 
 
   --p_data_comp2 : process (max_new, max_old) --, row_num_d,col_num )
@@ -223,26 +233,36 @@ addr_wr <= '0' & col_num(col_num'left downto P);
   --end process p_data_comp2;
 
 -- reset memory
-  p_data_comp3 : process (max_line, row_num_d) --, row_num_d,col_num )
-  begin
-      if row_num_d(P -1 downto 0)= (2**p-1) then -- last line in cluster
-         max_2mem <= (max_2mem'left => '1', others => '0');
-       else
-         max_2mem <= max_line;
-       end if;
-   --  end if;
-  end process p_data_comp3;
-
+--  p_data_comp3 : process (max_line, row_num_d) --, row_num_d,col_num )
+--  begin
+--      if row_num_d(P -1 downto 0)= (2**p-1) then -- last line in cluster
+--         max_2mem(max_2mem'left           ) <=            '1' ;
+--         max_2mem(max_2mem'left-1 downto 0) <= (others => '0');
+--       else
+--         max_2mem <= max_line;
+--       end if;
+--   --  end if;
+--  end process p_data_comp3;
+--
 -- Data output 
   p_data_out : process (clk,rst)
   begin
     if rst = '1' then
         en_out  <= '0';
+        max_2mem_d <= (others => '0');
+        row_num_d2 <= (others => '0');
     elsif rising_edge(clk) then
-          if row_num_d(P -1 downto 0)= (2**p-1) then
-             en_out  <= write_new_max;
-             --sof_out <= '0'; --en_ovf(SOF_BIT);
-             d_out   <= max_line;
+        --  if row_num_d(P -1 downto 0)= (2**p-1) then
+        --     en_out  <= write_new_max;
+        --     d_out   <= max_2mem; --max_line;
+        --  else
+        --     en_out  <= '0';
+        --  end if;
+        max_2mem_d <= max_2mem;
+        row_num_d2 <= row_num_d;
+          if row_num_d2(P -1 downto 0)= (2**p-1) and write_new_max = '0' and write_new_max_d = '1' then
+             en_out  <= write_new_max_d;
+             d_out   <= max_2mem_d; --max_line;
           else
              en_out  <= '0';
           end if;
