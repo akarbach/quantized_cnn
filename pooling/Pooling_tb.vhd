@@ -6,7 +6,7 @@ use IEEE.STD_LOGIC_SIGNED.ALL;
 entity Pooling_tb is
   generic (
            N             : integer := 8; -- data width
-           P             : integer := 2; -- power of pooling cluster (1 - 2x2, 2 - 4x4, 3 - 8x8, etc)
+           P             : integer := 1; -- power of pooling cluster (1 - 2x2, 2 - 4x4, 3 - 8x8, etc)
            in_row        : integer := 8;
            in_col        : integer := 8
            );
@@ -100,25 +100,41 @@ process
      wait for 10 ns; en_in <= '0'; d_in <= conv_std_logic_vector( 0, d_in'length);   --sof_in <= '0';
 -- Line 1
      wait for 10 ns; en_in <= '1'; d_in <= conv_std_logic_vector( 11, d_in'length); --sof_in <= '1';
+     wait for 10 ns; en_in <= '0';
      wait for 10 ns; en_in <= '1'; d_in <= conv_std_logic_vector( 2, d_in'length); --sof_in <= '0';
-     wait for 10 ns; en_in <= '1'; d_in <= conv_std_logic_vector( 3, d_in'length);
-     wait for 10 ns; en_in <= '1'; d_in <= conv_std_logic_vector( 4, d_in'length);
+     wait for 10 ns; en_in <= '0';
+     wait for 10 ns; en_in <= '1'; d_in <= conv_std_logic_vector( 5, d_in'length);
+     wait for 10 ns; en_in <= '0';
+     wait for 10 ns; en_in <= '1'; d_in <= conv_std_logic_vector( 6, d_in'length);
+     wait for 10 ns; en_in <= '0';
 
      wait for 10 ns; en_in <= '1'; d_in <= conv_std_logic_vector( 3, d_in'length);
+     wait for 10 ns; en_in <= '0';
      wait for 10 ns; en_in <= '1'; d_in <= conv_std_logic_vector( 2, d_in'length);
+     wait for 10 ns; en_in <= '0';
      wait for 10 ns; en_in <= '1'; d_in <= conv_std_logic_vector( 4, d_in'length);
+     wait for 10 ns; en_in <= '0';
      wait for 10 ns; en_in <= '1'; d_in <= conv_std_logic_vector( 3, d_in'length);
+     wait for 10 ns; en_in <= '0';
 
      wait for 10 ns; en_in <= '0'; d_in <= conv_std_logic_vector( 0, d_in'length);
 -- Line 2
      wait for 10 ns; en_in <= '1'; d_in <= conv_std_logic_vector( 1, d_in'length);
+     wait for 10 ns; en_in <= '0';
      wait for 10 ns; en_in <= '1'; d_in <= conv_std_logic_vector( 5, d_in'length);
+     wait for 10 ns; en_in <= '0';
      wait for 10 ns; en_in <= '1'; d_in <= conv_std_logic_vector( 3, d_in'length);
+     wait for 10 ns; en_in <= '0';
      wait for 10 ns; en_in <= '1'; d_in <= conv_std_logic_vector( 8, d_in'length);
+     wait for 10 ns; en_in <= '0';
      wait for 10 ns; en_in <= '1'; d_in <= conv_std_logic_vector( 4, d_in'length);
+     wait for 10 ns; en_in <= '0';
      wait for 10 ns; en_in <= '1'; d_in <= conv_std_logic_vector( 6, d_in'length);
+     wait for 10 ns; en_in <= '0';
      wait for 10 ns; en_in <= '1'; d_in <= conv_std_logic_vector( 17, d_in'length);
+     wait for 10 ns; en_in <= '0';
      wait for 10 ns; en_in <= '1'; d_in <= conv_std_logic_vector( 18, d_in'length);
+     wait for 10 ns; en_in <= '0';
 -- Line 3
      wait for 10 ns; en_in <= '1'; d_in <= conv_std_logic_vector( 9, d_in'length);
      wait for 10 ns; en_in <= '1'; d_in <= conv_std_logic_vector( 10, d_in'length);

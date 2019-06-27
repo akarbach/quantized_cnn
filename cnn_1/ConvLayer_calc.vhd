@@ -5,15 +5,15 @@ use IEEE.STD_LOGIC_SIGNED.ALL;
 
 entity ConvLayer_calc is
   generic (
-           Relu          : string := "yes"; --"no"/"yes"  -- nonlinear Relu function
+           --Relu          : string := "yes"; --"no"/"yes"  -- nonlinear Relu function
            BP            : string := "no";  --"no"/"yes"  -- Bypass
            TP            : string := "no";  --"no"/"yes"  -- Test pattern output
            mult_sum      : string := "sum"; --"mult"/"sum"
            Kernel_size   : integer := 3; -- 3/5
            N             : integer := 8; -- input data width
            M             : integer := 8; -- input weight width
-           W             : integer := 8; -- output data width      (Note, W+SR <= N+M+4)
-           SR            : integer := 2 -- data shift right before output
+           W             : integer := 8  -- output data width      (Note, W+SR <= N+M+4)
+           --SR            : integer := 2 -- data shift right before output
   	       );
   port    (
            clk         : in std_logic;
@@ -74,7 +74,7 @@ entity ConvLayer_calc is
           w24          : in std_logic_vector(M-1 downto 0);
           w25          : in std_logic_vector(M-1 downto 0);
 
-           d_out       : out std_logic_vector (W-1 downto 0);
+           d_out       : out std_logic_vector (N + M +4 downto 0);
            en_out      : out std_logic;
            sof_out     : out std_logic);
 end ConvLayer_calc;
@@ -381,76 +381,58 @@ end generate; -- sum
     end if;
   end process p_ker;
 
-  p_relu : process (clk)
-  begin
-    if rising_edge(clk) then
-      if Relu = "yes" then
-         relu_for: for i in 0 to d_ker'length-1  loop
-           d_relu(i) <= d_ker(i) and not d_ker(d_ker'left);    -- if MSB=1 (negative) thwen all bits are 0
-         end loop relu_for;
-      else
-         d_relu <= d_ker;
-      end if;
-    end if;
-  end process p_relu;
-
---  p_relu : process (clk,rst)
+--  p_relu : process (clk)
 --  begin
---     if rst = '1' then
---       d_relu <= (others => '0');
---    elsif rising_edge(clk) then
---       d_relu <= d_relu + 1;
+--    if rising_edge(clk) then
+--      if Relu = "yes" then
+--         relu_for: for i in 0 to d_ker'length-1  loop
+--           d_relu(i) <= d_ker(i) and not d_ker(d_ker'left);    -- if MSB=1 (negative) thwen all bits are 0
+--         end loop relu_for;
+--      else
+--         d_relu <= d_ker;
+--      end if;
 --    end if;
 --  end process p_relu;
-
-  p_relu_samp : process (clk,rst)
-  begin
-    if rst = '1' then
-       en_relu <= (others => '0');
-    elsif rising_edge(clk) then
-       en_relu <= en_end4;
-    end if;
-  end process p_relu_samp;
-
- -- check overflow before shift and change value to maximum if overflow occurs
-   p_ovf : process (clk)
-  begin
-    if rising_edge(clk) then
-       --if SR = 0 then
-       --   d_ovf <= d_relu;
-       --else
-          --if d_relu(d_relu'left  downto d_relu'left - SR ) = 0  then
-          if d_relu(d_relu'left  downto W + SR -2) = 0  then
-             d_ovf <= d_relu;
-          else
-             d_ovf( d_relu'left  downto W + SR -2 ) <= (others => '0'); 
-             d_ovf( W + SR - 3   downto         0 ) <= (others => '1'); 
-          end if;
-       --end if;
-    end if;
-  end process p_ovf;
-
---  p_ovf : process (clk,rst)
+--
+--  p_relu_samp : process (clk,rst)
 --  begin
---     if rst = '1' then
---       d_ovf <= (others => '0');
+--    if rst = '1' then
+--       en_relu <= (others => '0');
 --    elsif rising_edge(clk) then
---       d_ovf <= d_ovf + 1;
+--       en_relu <= en_end4;
+--    end if;
+--  end process p_relu_samp;
+--
+-- -- check overflow before shift and change value to maximum if overflow occurs
+--   p_ovf : process (clk)
+--  begin
+--    if rising_edge(clk) then
+--       --if SR = 0 then
+--       --   d_ovf <= d_relu;
+--       --else
+--          --if d_relu(d_relu'left  downto d_relu'left - SR ) = 0  then
+--          if d_relu(d_relu'left  downto W + SR -2) = 0  then
+--             d_ovf <= d_relu;
+--          else
+--             d_ovf( d_relu'left  downto W + SR -2 ) <= (others => '0'); 
+--             d_ovf( W + SR - 3   downto         0 ) <= (others => '1'); 
+--          end if;
+--       --end if;
 --    end if;
 --  end process p_ovf;
+--
+-- p_ovf_samp : process (clk,rst)
+--  begin
+--    if rst = '1' then
+--       en_ovf <= (others => '0');
+--    elsif rising_edge(clk) then
+--       en_ovf <= en_relu;
+--    end if;
+--  end process p_ovf_samp;
 
- p_ovf_samp : process (clk,rst)
-  begin
-    if rst = '1' then
-       en_ovf <= (others => '0');
-    elsif rising_edge(clk) then
-       en_ovf <= en_relu;
-    end if;
-  end process p_ovf_samp;
-
-en_out  <= en_ovf(EN_BIT);
-sof_out <= en_ovf(SOF_BIT);
-d_out   <= d_ovf (W + SR -1  downto SR); --(5 downto 1); --(W + SR -1  downto SR );
+en_out  <= en_end4(EN_BIT);
+sof_out <= en_end4(SOF_BIT);
+d_out   <= d_ker; 
 
 end generate; -- BP = "no" and TP = "no"
 

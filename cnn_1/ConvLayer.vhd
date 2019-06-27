@@ -14,14 +14,14 @@ entity ConvLayer is
   	       mult_sum      : string := "sum"; --"mult"/"sum";
            Kernel_size   : integer := 5; -- 3/5
            zero_padding  : string := "yes";  --"no"/"yes"
-           CL_inputs     : integer := 2; -- number of inputs features
-           CL_outs       : integer := 3; -- number of output features
+           CL_inputs     : integer := 4; -- number of inputs features
+           CL_outs       : integer := 2; -- number of output features
 
            --CL_outs      : integer := 3; -- number of CL units
            N             : integer := 8; --W; -- input data width
            M             : integer := 8; --W; -- input weight width
            W             : integer := 8; -- output data width      (Note, W+SR <= N+M+4)
-           SR            : integer := 0; -- data shift right before output (deleted LSBs)
+           SR            : integer := 1; -- data shift right before output (deleted LSBs)
            --bpp           : integer := 8; -- bit per pixel
   	       in_row        : integer := 114;
   	       in_col        : integer := 114
@@ -35,12 +35,12 @@ entity ConvLayer is
   	       --sol     : in std_logic; -- start of line
   	       --eof     : in std_logic; -- end of frame
 
-           w_unit_n: in std_logic_vector(  9 downto 0);
-           w_in    : in std_logic_vector(M-1 downto 0);
-           w_num   : in std_logic_vector(  4 downto 0);
+           w_unit_n: in std_logic_vector(  9 downto 0);  -- address of CL unit
+           w_in    : in std_logic_vector(M-1 downto 0);  -- value
+           w_num   : in std_logic_vector(  4 downto 0);  -- number of weight
            w_en    : in std_logic;
 
-           d_out   : out std_logic_vector (W-1 downto 0); --vec;--std_logic_vector (W-1 downto 0);
+           d_out   : out std_logic_vector (W-1 downto 0); --vec;
            en_out  : out std_logic;
            sof_out : out std_logic);
 end ConvLayer;
@@ -49,15 +49,15 @@ architecture a of ConvLayer is
 
 component ConvLayer_calc is
   generic (
-           Relu          : string := "yes"; --"no"/"yes"  -- nonlinear Relu function
+           --Relu          : string := "yes"; --"no"/"yes"  -- nonlinear Relu function
            BP            : string := "no";  --"no"/"yes"  -- Bypass
            TP            : string := "no";  --"no"/"yes"  -- Test pattern output
            mult_sum      : string := "sum"; --"mult"/"sum"
            Kernel_size   : integer := 3; -- 3/5
            N             : integer := 8; -- input data width
            M             : integer := 8; -- input weight width
-           W             : integer := 8; -- output data width      (Note, W+SR <= N+M+4)
-           SR            : integer := 2 -- data shift right before output
+           W             : integer := 8  -- output data width      (Note, W+SR <= N+M+4)
+           --SR            : integer := 2 -- data shift right before output
            );
   port    (
            clk         : in std_logic;
@@ -118,7 +118,7 @@ component ConvLayer_calc is
           w24          : in std_logic_vector(M-1 downto 0);
           w25          : in std_logic_vector(M-1 downto 0);
 
-           d_out       : out std_logic_vector (W-1 downto 0);
+           d_out       : out std_logic_vector (N + M +4  downto 0);
            en_out      : out std_logic;
            sof_out     : out std_logic);                     
 end component;
@@ -225,7 +225,9 @@ component multi_adder is
            TP            : string := "no";  --"no"/"yes"  -- Test pattern output
            CL_inputs     : integer := 3;    -- number of inputs features
            CL_outs       : integer := 6;    -- number of output features
-           N             : integer := 8     -- input data width
+           N             : integer := 8;    -- input data width
+           W             : integer := 8;     -- output data width  
+           SR            : integer := 2     -- data shift right before output
            );
   port    (
            clk         : in std_logic;
@@ -235,7 +237,7 @@ component multi_adder is
            en_in       : in std_logic;
            sof_in      : in std_logic; -- start of frame
 
-           d_out       : out vec(0 to CL_outs -1)(N-1 downto 0);
+           d_out       : out vec(0 to CL_outs -1)(W-1 downto 0);
            en_out      : out std_logic;
            sof_out     : out std_logic);
 end component;
@@ -318,9 +320,9 @@ signal w_unit_ni  : integer;
 type d_out_vec is array (natural range 0 to CL_outs -1) of std_logic_vector(W-1 downto 0); --element;
 type d_out_mat is array (natural range 0 to (CL_inputs -1)) of d_out_vec;
 --signal d_out1     : d_out_mat;                                      --vec;
-signal d_out1     : mat(0 to CL_inputs-1)(0 to CL_outs -1)(N-1 downto 0);                                      --vec;
+signal d_out1     : mat(0 to CL_inputs-1)(0 to CL_outs -1)(N + M +4  downto 0);                                      --vec;
 --signal d_sums     : d_out_vec; --vec;
-signal d_sums     : vec(0 to CL_outs -1)(N-1 downto 0);
+signal d_sums     : vec(0 to CL_outs -1)(W-1 downto 0);
 
 
 type t_mat is array (0 to CL_inputs-1) of std_logic_vector(CL_outs-1 downto 0); 
@@ -454,15 +456,15 @@ CL_w_g:  ConvLayer_weight_gen
 --gen_CL: for I in 0 to CL_outs-1 generate
  CL_c:  ConvLayer_calc
   generic map (
-           Relu       => Relu       ,
+          -- Relu       => Relu       ,
            BP         => BP         ,
            TP         => TP         ,
            mult_sum   => mult_sum   ,
            Kernel_size=> Kernel_size,
            N          => N          ,
            M          => M          ,
-           W          => W          ,
-           SR         => SR        
+           W          => W           
+           --SR         => SR        
            )
   port  map  ( 
            clk         => clk        ,
@@ -539,7 +541,9 @@ adder: multi_adder
            TP          => TP            ,
            CL_inputs   => CL_inputs     , 
            CL_outs     => CL_outs       ,
-           N           => W         
+           N           => N + M +5      ,
+           W           => W             ,            
+           SR          => SR            
            )
   port map   (
            clk         => clk           ,

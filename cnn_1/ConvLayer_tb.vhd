@@ -10,15 +10,19 @@ entity ConvLayer_tb is
            Relu          : string := "yes"; --"no"/"yes"  -- nonlinear Relu function
            BP            : string := "no";  --"no"/"yes"  -- Bypass
            TP            : string := "no";  --"no"/"yes"  -- Test pattern output
-           mult_sum      : string := "sum";
-           CL_units      : integer := 8; -- number of CL units
-           N             : integer := 8; -- input data width
-           M             : integer := 8; -- input weight width
-           W             : integer := 8; -- output data width (Note, W+SR <= N+M+4)
-           SR            : integer := 4; -- data shift right before output
+           mult_sum      : string := "mult"; --"sum"/"mult";
+           Kernel_size   : integer := 5; -- 3/5
+           zero_padding  : string := "yes";  --"no"/"yes"
+           CL_inputs     : integer := 14; -- number of inputs features
+           CL_outs       : integer := 4; -- number of output features
+           all_width     : integer := 8;
+           N             : integer := all_width; -- input data width
+           M             : integer := all_width; -- input weight width
+           W             : integer := all_width; -- output data width      (Note, W+SR <= N+M+4)
+           SR            : integer := 1; -- data shift right before output
            --bpp           : integer := 8; -- bit per pixel
-           in_row        : integer := 3;
-           in_col        : integer := 4
+           in_row        : integer := 7;
+           in_col        : integer := 8
            );
 end entity ConvLayer_tb;
 
@@ -26,14 +30,17 @@ architecture ConvLayer_tb of ConvLayer_tb is
 
 component ConvLayer is
   generic (
-           Relu          : string := "yes"; --"no"/"yes"  -- nonlinear Relu function
+           Relu          : string := "no"; --"no"/"yes"  -- nonlinear Relu function
            BP            : string := "no";  --"no"/"yes"  -- Bypass
            TP            : string := "no";  --"no"/"yes"  -- Test pattern output
            mult_sum      : string := "sum";
-           --CL_units      : integer := 8; -- number of CL units
+           Kernel_size   : integer := 3; -- 3/5
+           zero_padding  : string := "yes";  --"no"/"yes"
+           CL_inputs     : integer := 14; -- number of inputs features
+           CL_outs       : integer := 4; -- number of output features
            N             : integer := 8; -- input data width
            M             : integer := 8; -- input weight width
-           --W             : integer := 8; -- output data width      (Note, W+SR <= N+M+4)
+           W             : integer := 2; -- output data width      (Note, W+SR <= N+M+4)
            SR            : integer := 2; -- data shift right before output
            in_row        : integer := 256;
            in_col        : integer := 256
@@ -41,7 +48,7 @@ component ConvLayer is
   port    (
            clk     : in std_logic;
            rst     : in std_logic;
-           d_in    : in std_logic_vector (N-1 downto 0);
+           d_in    : in vec(0 to CL_inputs -1)(W-1 downto 0);
            en_in   : in std_logic;
            sof_in  : in std_logic; -- start of frame
            --sol     : in std_logic; -- start of line
@@ -49,7 +56,7 @@ component ConvLayer is
 
            w_unit_n: in std_logic_vector(  9 downto 0);
            w_in    : in std_logic_vector(M-1 downto 0);
-           w_num   : in std_logic_vector(  3 downto 0);
+           w_num   : in std_logic_vector(  4 downto 0);
            w_en    : in std_logic;
 
            d_out   : out std_logic_vector (W-1 downto 0);
@@ -59,7 +66,7 @@ end component;
 
 signal clk     : std_logic;
 signal rst     : std_logic;
-signal d_in    : std_logic_vector (N-1 downto 0);
+signal d_in    : vec(0 to CL_inputs -1)(W-1 downto 0); 
 signal en_in   : std_logic;
 signal sof_in  : std_logic; -- start of frame
 --signal sol     : std_logic; -- start of line
@@ -67,7 +74,7 @@ signal sof_in  : std_logic; -- start of frame
 
 signal w_unit_n: std_logic_vector(  9 downto 0);
 signal w_in    : std_logic_vector(M-1 downto 0);
-signal w_num   : std_logic_vector(  3 downto 0);
+signal w_num   : std_logic_vector(  4 downto 0);
 signal w_en    : std_logic;
 --signal w_en    : std_logic_vector(  9 downto 0);
 
@@ -75,7 +82,7 @@ signal d_out   : std_logic_vector (W-1 downto 0);
 signal en_out  : std_logic;
 signal sof_out : std_logic; -- start of frame
 
-signal enreg   : std_logic_vector(  7 downto 0) := x"87";
+signal enreg   : std_logic_vector(  7 downto 0) := x"C7";
 begin
 
 
@@ -86,10 +93,13 @@ DUT: ConvLayer generic map (
       BP       => BP      ,
       TP       => TP      ,
       mult_sum => mult_sum,
-      --CL_units => CL_units, -- number of CL units
+      Kernel_size   => Kernel_size ,
+      zero_padding  => zero_padding,
+      CL_inputs     => CL_inputs   ,
+      CL_outs       => CL_outs     ,
       N        => N       , -- input data width
       M        => M       , -- input data width
-     -- W        => W       ,-- output data width
+      W        => W       ,-- output data width
       SR       => SR      ,-- output data shift right
       in_row   => in_row  ,
       in_col   => in_col
@@ -126,15 +136,31 @@ rst <= '1', '0' after 10 ns;
 process        
    begin   
      wait for 5 ns;w_unit_n <= conv_std_logic_vector( 0, w_unit_n'length);
-     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 1, w_num'length); w_in <= conv_std_logic_vector(11, w_in'length); 
-     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 2, w_num'length); w_in <= conv_std_logic_vector(12, w_in'length); 
-     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 3, w_num'length); w_in <= conv_std_logic_vector(13, w_in'length); 
-     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 4, w_num'length); w_in <= conv_std_logic_vector(14, w_in'length); 
-     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 5, w_num'length); w_in <= conv_std_logic_vector(15, w_in'length); 
-     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 6, w_num'length); w_in <= conv_std_logic_vector(16, w_in'length); 
-     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 7, w_num'length); w_in <= conv_std_logic_vector(17, w_in'length); 
-     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 8, w_num'length); w_in <= conv_std_logic_vector(18, w_in'length); 
-     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 9, w_num'length); w_in <= conv_std_logic_vector(19, w_in'length); 
+     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector(  1, w_num'length); w_in <= conv_std_logic_vector( 1, w_in'length); 
+     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector(  2, w_num'length); w_in <= conv_std_logic_vector( 2, w_in'length); 
+     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector(  3, w_num'length); w_in <= conv_std_logic_vector( 3, w_in'length); 
+     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector(  4, w_num'length); w_in <= conv_std_logic_vector( 4, w_in'length); 
+     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector(  5, w_num'length); w_in <= conv_std_logic_vector( 5, w_in'length); 
+     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector(  6, w_num'length); w_in <= conv_std_logic_vector( 6, w_in'length); 
+     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector(  7, w_num'length); w_in <= conv_std_logic_vector( 7, w_in'length); 
+     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector(  8, w_num'length); w_in <= conv_std_logic_vector( 8, w_in'length); 
+     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector(  9, w_num'length); w_in <= conv_std_logic_vector( 9, w_in'length); 
+     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 10, w_num'length); w_in <= conv_std_logic_vector(10, w_in'length); 
+     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 11, w_num'length); w_in <= conv_std_logic_vector(11, w_in'length); 
+     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 12, w_num'length); w_in <= conv_std_logic_vector(12, w_in'length); 
+     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 13, w_num'length); w_in <= conv_std_logic_vector(13, w_in'length); 
+     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 14, w_num'length); w_in <= conv_std_logic_vector(14, w_in'length); 
+     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 15, w_num'length); w_in <= conv_std_logic_vector(15, w_in'length); 
+     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 16, w_num'length); w_in <= conv_std_logic_vector(16, w_in'length); 
+     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 17, w_num'length); w_in <= conv_std_logic_vector(17, w_in'length); 
+     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 18, w_num'length); w_in <= conv_std_logic_vector(18, w_in'length); 
+     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 19, w_num'length); w_in <= conv_std_logic_vector(19, w_in'length); 
+     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 20, w_num'length); w_in <= conv_std_logic_vector(20, w_in'length); 
+     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 21, w_num'length); w_in <= conv_std_logic_vector(21, w_in'length); 
+     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 22, w_num'length); w_in <= conv_std_logic_vector(22, w_in'length); 
+     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 23, w_num'length); w_in <= conv_std_logic_vector(23, w_in'length); 
+     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 24, w_num'length); w_in <= conv_std_logic_vector(24, w_in'length); 
+     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 25, w_num'length); w_in <= conv_std_logic_vector(25, w_in'length); 
 wait for 10 ns;  w_en <= '0'; w_unit_n <= conv_std_logic_vector( 1, w_unit_n'length);
      wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 1, w_num'length); w_in <= conv_std_logic_vector(21, w_in'length); 
      wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 2, w_num'length); w_in <= conv_std_logic_vector(22, w_in'length); 
@@ -175,7 +201,17 @@ begin
   wait until rst = '0';
 --    w_num <= conv_std_logic_vector( 0, w_num'length);
 --    w_in  <= conv_std_logic_vector( 5, w_in'length);
-    d_in <= conv_std_logic_vector( 17, d_in'length);
+ --   d_in <= conv_std_logic_vector( 13, d_in'length);
+    gen_d_in: for I in 0 to CL_inputs-1 loop
+       d_in(I) <= conv_std_logic_vector( 13 + 3*I, W);
+    end loop gen_d_in;
+    wait until rising_edge(clk); 
+    wait until rising_edge(clk); 
+    wait until rising_edge(clk); 
+    wait until rising_edge(clk); 
+    wait until rising_edge(clk); 
+    wait until rising_edge(clk); 
+    wait until rising_edge(clk); 
     wait until rising_edge(clk); 
   while true loop
     sof_in <= '1';
@@ -186,7 +222,10 @@ begin
   --    w_in   <= w_in + 1;
   --    w_num   <= w_num + 1;
   --    w_en    <= '1';
-      d_in <= d_in(d_in'left - 1 downto 0) & (d_in(d_in'left) xor d_in(d_in'left - 1));
+    --  d_in <= d_in(d_in'left - 1 downto 0) & (d_in(d_in'left) xor d_in(d_in'left - 1));    
+      gen2_d_in: for I in 0 to CL_inputs-1 loop
+        d_in(I) <= d_in(I)(W-2 downto 0) & (d_in(I)(W-1) xor d_in(I)(W - 2));
+      end loop gen2_d_in;
       wait until rising_edge(clk);
       sof_in <= '0';
     end loop;

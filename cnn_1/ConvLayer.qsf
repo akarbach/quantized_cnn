@@ -36,8 +36,8 @@
 # -------------------------------------------------------------------------- #
 
 
-set_global_assignment -name FAMILY "Arria 10"
-set_global_assignment -name DEVICE 10AX115R4F40I3SG
+set_global_assignment -name DEVICE 1SX280LU3F50I3VG
+set_global_assignment -name FAMILY "Stratix 10"
 set_global_assignment -name TOP_LEVEL_ENTITY ConvLayer
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 17.1.0
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "09:40:52  APRIL 03, 2019"
@@ -51,14 +51,14 @@ set_global_assignment -name EDA_OUTPUT_DATA_FORMAT "VERILOG HDL" -section_id eda
 set_global_assignment -name FLOW_ENABLE_POWER_ANALYZER ON
 set_global_assignment -name POWER_DEFAULT_TOGGLE_RATE 12.5%
 set_global_assignment -name POWER_DEFAULT_INPUT_IO_TOGGLE_RATE 12.5%
-set_global_assignment -name POWER_AUTO_COMPUTE_TJ ON
-set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
-set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
 
+set_global_assignment -name VHDL_INPUT_VERSION VHDL_2008
+set_global_assignment -name VHDL_SHOW_LMF_MAPPING_MESSAGES OFF
+set_global_assignment -name VHDL_FILE ConvLayer_types_package.vhd
+set_global_assignment -name VHDL_FILE ../multi_adder/multi_adder.vhd
 set_global_assignment -name VHDL_FILE ../multiplier_parallel/mult.vhd
 set_global_assignment -name VHDL_FILE ../multiplier_parallel/generic_mult.vhd
 set_global_assignment -name VHDL_FILE ../binary_adder/Binary_adder8.vhd
-set_global_assignment -name VHDL_FILE ConvLayer_types_package.vhd
 set_global_assignment -name VHDL_FILE ConvLayer_weight_gen.vhd
 set_global_assignment -name VHDL_FILE ConvLayer_data_gen.vhd
 set_global_assignment -name VHDL_FILE ConvLayer_calc.vhd
