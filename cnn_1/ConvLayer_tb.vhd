@@ -13,15 +13,15 @@ entity ConvLayer_tb is
            mult_sum      : string := "mult"; --"sum"/"mult";
            Kernel_size   : integer := 5; -- 3/5
            zero_padding  : string := "yes";  --"no"/"yes"
-           CL_inputs     : integer := 14; -- number of inputs features
-           CL_outs       : integer := 4; -- number of output features
+           CL_inputs     : integer := 1; -- number of inputs features
+           CL_outs       : integer := 1; -- number of output features
            all_width     : integer := 8;
            N             : integer := all_width; -- input data width
-           M             : integer := all_width; -- input weight width
+           M             : integer := 4; -- input weight width
            W             : integer := all_width; -- output data width      (Note, W+SR <= N+M+4)
            SR            : integer := 1; -- data shift right before output
            --bpp           : integer := 8; -- bit per pixel
-           in_row        : integer := 7;
+           in_row        : integer := 17;
            in_col        : integer := 8
            );
 end entity ConvLayer_tb;
@@ -48,13 +48,13 @@ component ConvLayer is
   port    (
            clk     : in std_logic;
            rst     : in std_logic;
-           d_in    : in vec(0 to CL_inputs -1)(W-1 downto 0);
+           d_in    : in vec(0 to CL_inputs -1)(N-1 downto 0);
            en_in   : in std_logic;
            sof_in  : in std_logic; -- start of frame
            --sol     : in std_logic; -- start of line
            --eof     : in std_logic; -- end of frame
 
-           w_unit_n: in std_logic_vector(  9 downto 0);
+           w_unit_n: in std_logic_vector( 15 downto 0);
            w_in    : in std_logic_vector(M-1 downto 0);
            w_num   : in std_logic_vector(  4 downto 0);
            w_en    : in std_logic;
@@ -66,13 +66,13 @@ end component;
 
 signal clk     : std_logic;
 signal rst     : std_logic;
-signal d_in    : vec(0 to CL_inputs -1)(W-1 downto 0); 
+signal d_in    : vec(0 to CL_inputs -1)(N-1 downto 0); 
 signal en_in   : std_logic;
 signal sof_in  : std_logic; -- start of frame
 --signal sol     : std_logic; -- start of line
 --signal eof     : std_logic; -- end of frame
 
-signal w_unit_n: std_logic_vector(  9 downto 0);
+signal w_unit_n: std_logic_vector( 15 downto 0);
 signal w_in    : std_logic_vector(M-1 downto 0);
 signal w_num   : std_logic_vector(  4 downto 0);
 signal w_en    : std_logic;

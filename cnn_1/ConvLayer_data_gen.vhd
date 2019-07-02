@@ -413,7 +413,7 @@ data2firstlast_pxl <= firstlast_3 when Kernel_size = 3 else firstlast_5;
                 start_pixel_done <= '1';
              end if;
            else -- Kernel_size = 5
-             if start_pixel_count = 2*in_col + 3 then
+             if start_pixel_count = 2*in_col + 2 then
                 start_pixel_done <= '1';
              end if;
            end if;

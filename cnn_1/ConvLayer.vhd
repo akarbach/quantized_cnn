@@ -14,8 +14,8 @@ entity ConvLayer is
   	       mult_sum      : string := "sum"; --"mult"/"sum";
            Kernel_size   : integer := 5; -- 3/5
            zero_padding  : string := "yes";  --"no"/"yes"
-           CL_inputs     : integer := 4; -- number of inputs features
-           CL_outs       : integer := 2; -- number of output features
+           CL_inputs     : integer := 1; -- number of inputs features
+           CL_outs       : integer := 1; -- number of output features
 
            --CL_outs      : integer := 3; -- number of CL units
            N             : integer := 8; --W; -- input data width
@@ -29,13 +29,13 @@ entity ConvLayer is
   port    (
            clk     : in std_logic;
            rst     : in std_logic;
-  	       d_in    : in vec(0 to CL_inputs -1)(W-1 downto 0); --invec;                                      --std_logic_vector (N-1 downto 0);
+  	       d_in    : in vec(0 to CL_inputs -1)(N-1 downto 0); --invec;                                      --std_logic_vector (N-1 downto 0);
   	       en_in   : in std_logic;
   	       sof_in  : in std_logic; -- start of frame
   	       --sol     : in std_logic; -- start of line
   	       --eof     : in std_logic; -- end of frame
 
-           w_unit_n: in std_logic_vector(  9 downto 0);  -- address of CL unit
+           w_unit_n: in std_logic_vector( 15 downto 0);  -- address weight generators,  8MSB - CL inputs, 8LSB - CL outputs
            w_in    : in std_logic_vector(M-1 downto 0);  -- value
            w_num   : in std_logic_vector(  4 downto 0);  -- number of weight
            w_en    : in std_logic;
@@ -312,9 +312,9 @@ signal sof_s      : std_logic_vector(CL_inputs-1 downto 0);         -- std_logic
 
 signal w_in_s     : std_logic_vector(M-1 downto 0);
 signal w_num_s    : std_logic_vector(  4 downto 0);
-signal w_unit_en  : std_logic_vector (CL_outs-1 downto 0);
-signal w_unit_ni  : integer;
-
+--signal w_unit_en  : std_logic_vector (CL_outs-1 downto 0);
+signal w_unit_input   : integer;
+signal w_unit_output  : integer;
 
 --type d_out_mat is array (natural range 0 to CL_inputs -1) of vec;
 type d_out_vec is array (natural range 0 to CL_outs -1) of std_logic_vector(W-1 downto 0); --element;
@@ -323,7 +323,7 @@ type d_out_mat is array (natural range 0 to (CL_inputs -1)) of d_out_vec;
 signal d_out1     : mat(0 to CL_inputs-1)(0 to CL_outs -1)(N + M +4  downto 0);                                      --vec;
 --signal d_sums     : d_out_vec; --vec;
 signal d_sums     : vec(0 to CL_outs -1)(W-1 downto 0);
-
+signal w_unit_en  : vec(0 to CL_inputs -1)(CL_outs-1 downto 0);
 
 type t_mat is array (0 to CL_inputs-1) of std_logic_vector(CL_outs-1 downto 0); 
 signal en_out1    : t_mat;                                            -- std_logic_vector (CL_outs-1 downto 0);
@@ -336,25 +336,28 @@ signal countJ      : std_logic_vector (9 downto 0);
 
 begin
 
-w_unit_ni <= conv_integer(unsigned('0' & w_unit_n));
+w_unit_input  <= conv_integer(unsigned('0' & w_unit_n( 7 downto 0)));
+w_unit_output <= conv_integer(unsigned('0' & w_unit_n(15 downto 8)));
 
 w_en_p : process (clk,rst)
 --w_en_p : process (w_unit_ni)
 begin
    if rst = '1' then
-       w_unit_en     <= (others => '0');
+       w_unit_en     <= (others => (others => '0'));
    elsif rising_edge(clk) then
       w_in_s   <= w_in ;
       w_num_s  <= w_num;
 
-      For I in 0 to CL_outs-1 loop
-         if w_en = '1' then
-            if w_unit_ni = i then 
-               w_unit_en(i) <= '1';
-            else 
-               w_unit_en(i) <= '0';
+      for j in 0 to CL_inputs-1 loop
+         for i in 0 to CL_outs-1 loop
+            if w_en = '1' then
+               if w_unit_input = i and w_unit_output = j then 
+                  w_unit_en(j)(i) <= '1';
+               else 
+                  w_unit_en(j)(i) <= '0';
+               end if;
             end if;
-         end if;
+         end loop;
       end loop;
    end if;
 end process w_en_p;
@@ -424,7 +427,7 @@ CL_w_g:  ConvLayer_weight_gen
 
            w_in       => w_in_s    ,
            w_num      => w_num_s   ,
-           w_en       => w_unit_en(0)     , --(i)   ,
+           w_en       => w_unit_en(j)(i)     , --(i)   ,
 
            w1         => w1 (J)(i)    ,
            w2         => w2 (J)(i)    ,

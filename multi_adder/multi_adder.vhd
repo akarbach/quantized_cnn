@@ -48,6 +48,11 @@ signal  d_4      : mat(0 to             4-1)(0 to CL_outs -1)(Np7 downto 0);
 signal  d_16     : mat(0 to            16-1)(0 to CL_outs -1)(Np7 downto 0);
 signal  d_64     : mat(0 to            64-1)(0 to CL_outs -1)(Np7 downto 0);
 signal  d_256    : mat(0 to           256-1)(0 to CL_outs -1)(Np7 downto 0);
+
+signal  en4_in , en16_in , en64_in , en1_in , en_relu , en_ovf    : std_logic;
+signal  sof4_in, sof16_in, sof64_in, sof1_in, sof_relu, sof_ovf   : std_logic; -- start of frame
+
+
 --constant EN_BIT  : integer range 0 to 1 := 0;
 --constant SOF_BIT : integer range 0 to 1 := 1;
 
@@ -125,6 +130,17 @@ end generate add_i_0;
 ---end process;
 
 gen_d_64_full: if CL_inputs > 64 generate
+process (clk,rst)
+begin
+  if rst = '1' then
+     en64_in     <= '0';
+     sof64_in    <= '0';
+  elsif rising_edge(clk) then
+     en64_in     <= en_in  ;
+     sof64_in    <= sof_in ;
+  end if;
+end process;
+
 process (clk)
 begin
    if rising_edge(clk) then
@@ -392,6 +408,8 @@ end generate gen_d_64_full;
 
 gen_d_64_short: if (CL_inputs <= 64) and (CL_inputs > 16)  generate
       gen_CL: for I in 0 to CL_outs-1 generate
+         en64_in     <= en_in  ;
+         sof64_in    <= sof_in ;
          d_64( 0)(I) <= d_ext( 0)(I);
          d_64( 1)(I) <= d_ext( 1)(I);
          d_64( 2)(I) <= d_ext( 2)(I);
@@ -461,6 +479,17 @@ end generate gen_d_64_short;
 
 ------------------------------------------------------------------------------------------------------------------------
 gen_d_16_full: if CL_inputs > 16 generate
+process (clk,rst)
+begin
+  if rst = '1' then
+     en16_in     <= '0';
+     sof16_in    <= '0';
+  elsif rising_edge(clk) then
+     en16_in     <= en64_in  ;
+     sof16_in    <= sof64_in ;
+  end if;
+end process;
+
 process (clk)
 begin
    if rising_edge(clk) then
@@ -536,6 +565,8 @@ end generate gen_d_16_full;
 
 gen_d_16_short: if (CL_inputs <= 16) and (CL_inputs > 4)  generate
       gen_CL: for I in 0 to CL_outs-1 generate
+         en16_in     <= en_in  ;
+         sof16_in    <= sof_in ;
          d_16( 0)(I) <= d_ext( 0)(I);
          d_16( 1)(I) <= d_ext( 1)(I);
          d_16( 2)(I) <= d_ext( 2)(I);
@@ -557,6 +588,18 @@ end generate gen_d_16_short;
 
 
 gen_d_4_full: if CL_inputs > 4 generate
+
+process (clk,rst)
+begin
+  if rst = '1' then
+     en4_in     <= '0';
+     sof4_in    <= '0';
+  elsif rising_edge(clk) then
+     en4_in    <= en16_in  ;
+     sof4_in   <= sof16_in ;
+  end if;
+end process;
+
 process (clk)
 begin
    if rising_edge(clk) then
@@ -587,6 +630,8 @@ gen_d_4_short: if CL_inputs <= 4 generate
 --begin
 --   if rising_edge(clk) then
       gen_CL: for I in 0 to CL_outs-1 generate
+         en4_in    <= en_in  ;
+         sof4_in   <= sof_in ;
          d_4(0)(I) <= d_ext(0)(I);
          d_4(1)(I) <= d_ext(1)(I);
          d_4(2)(I) <= d_ext(2)(I);
@@ -595,6 +640,19 @@ gen_d_4_short: if CL_inputs <= 4 generate
 --   end if;
 --end process;
 end generate gen_d_4_short;
+
+
+process (clk,rst)
+begin
+  if rst = '1' then
+     en1_in     <= '0';
+     sof1_in    <= '0';
+  elsif rising_edge(clk) then
+     en1_in   <= en4_in  ;
+     sof1_in  <= sof4_in ;
+  end if;
+end process;
+
 
 process (clk)
    variable tmp : vec(0 to CL_outs -1)(N-1 downto 0);
@@ -609,6 +667,21 @@ begin
    end if;
 end process;
 
+
+process (clk,rst)
+begin
+  if rst = '1' then
+    en_relu   <= '0';
+    sof_relu  <= '0';
+    en_ovf    <= '0';
+    sof_ovf   <= '0';
+  elsif rising_edge(clk) then
+    en_relu   <= en1_in  ;
+    sof_relu  <= sof1_in ;
+    en_ovf    <= en_relu  ;
+    sof_ovf   <= sof_relu ;
+  end if;
+end process;
 
 p_relu : process (clk)
 begin
@@ -630,7 +703,6 @@ end process p_relu;
    p_ovf : process (clk)
   begin
     if rising_edge(clk) then
-
        ovf_for: for i in 0 to CL_outs-1 loop
           if d_relu(i)(d_relu'left  downto W + SR -2) = 0  then
              d_ovf(i) <= d_relu(i);
@@ -646,5 +718,7 @@ end process p_relu;
 out_cut_for: for i in 0 to CL_outs-1 generate
    d_out(i) <= d_ovf(i)(W + SR - 1 downto SR);
 end generate out_cut_for;
+en_out   <= en_ovf  ;
+sof_out  <= sof_ovf ;
 
 end a;
