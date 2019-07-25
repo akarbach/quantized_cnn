@@ -38,16 +38,19 @@ constant Np3 : integer := N+3;
 constant Np1 : integer := N+1;
 constant Nm1 : integer := N-1;
 
-signal  d_sum          : vec(0 to CL_outs -1)(Np7 downto 0); --(N-1 downto 0);
-signal  d_relu         : vec(0 to CL_outs -1)(Np7 downto 0); --(N-1 downto 0);
-signal  d_ovf          : vec(0 to CL_outs -1)(Np7 downto 0); --(N-1 downto 0);
+constant d_sumM  : integer := Np7;
+constant d_reluM : integer := Np7;
+constant d_ovfM  : integer := Np7;
+signal  d_sum          : vec(0 to CL_outs -1)(d_sumM  downto 0); --(N-1 downto 0);
+signal  d_relu         : vec(0 to CL_outs -1)(d_reluM downto 0); --(N-1 downto 0);
+signal  d_ovf          : vec(0 to CL_outs -1)(d_ovfM  downto 0); --(N-1 downto 0);
 
 signal  d_exten        : mat(0 to max_input_num-1)(0 to CL_outs -1)(N-1 downto 0);
 signal  d_ext          : mat(0 to max_input_num-1)(0 to CL_outs -1)(Np7 downto 0);
 signal  d_4      : mat(0 to             4-1)(0 to CL_outs -1)(Np7 downto 0);
 signal  d_16     : mat(0 to            16-1)(0 to CL_outs -1)(Np7 downto 0);
 signal  d_64     : mat(0 to            64-1)(0 to CL_outs -1)(Np7 downto 0);
-signal  d_256    : mat(0 to           256-1)(0 to CL_outs -1)(Np7 downto 0);
+
 
 signal  en4_in , en16_in , en64_in , en1_in , en_relu , en_ovf    : std_logic;
 signal  sof4_in, sof16_in, sof64_in, sof1_in, sof_relu, sof_ovf   : std_logic; -- start of frame
@@ -688,8 +691,9 @@ begin
   if rising_edge(clk) then
     if Relu = "yes" then
        relu_outs_for: for i in 0 to CL_outs-1 loop
-          relu_bits_for: for j in 0 to N-1 loop
-             d_relu(i)(j) <= d_sum(i)(j) and not d_sum(i)(d_sum'left);    -- if MSB=1 (negative) thwen all bits are 0
+          relu_bits_for: for j in 0 to Np7 loop
+             --d_relu(i)(j) <= d_sum(i)(j) and not d_sum(i)(d_sum'left);    -- if MSB=1 (negative) thwen all bits are 0
+             d_relu(i)(j) <= d_sum(i)(j) and not d_sum(i)(d_sumM);    -- if MSB=1 (negative) thwen all bits are 0 
           end loop relu_bits_for;
        end loop relu_outs_for;
     else
@@ -704,10 +708,12 @@ end process p_relu;
   begin
     if rising_edge(clk) then
        ovf_for: for i in 0 to CL_outs-1 loop
-          if d_relu(i)(d_relu'left  downto W + SR -2) = 0  then
+          --if d_relu(i)(d_relu'left  downto W + SR -2) = 0  then 
+          if d_relu(i)(d_reluM  downto W + SR -2) = 0  then
              d_ovf(i) <= d_relu(i);
           else
-             d_ovf(i)( d_relu'left  downto W + SR -2 ) <= (others => '0'); 
+             --d_ovf(i)( d_relu'left  downto W + SR -2 ) <= (others => '0'); 
+             d_ovf(i)( d_ovfM  downto W + SR -2 ) <= (others => '0'); 
              d_ovf(i)( W + SR - 3   downto         0 ) <= (others => '1'); 
           end if;
        end loop ovf_for;

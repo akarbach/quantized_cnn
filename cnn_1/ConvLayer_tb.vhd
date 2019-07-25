@@ -13,11 +13,11 @@ entity ConvLayer_tb is
            mult_sum      : string := "mult"; --"sum"/"mult";
            Kernel_size   : integer := 5; -- 3/5
            zero_padding  : string := "yes";  --"no"/"yes"
-           CL_inputs     : integer := 1; -- number of inputs features
-           CL_outs       : integer := 1; -- number of output features
+           CL_inputs     : integer := 3; -- number of inputs features
+           CL_outs       : integer := 2; -- number of output features
            all_width     : integer := 8;
            N             : integer := all_width; -- input data width
-           M             : integer := 4; -- input weight width
+           M             : integer := 5; -- input weight width
            W             : integer := all_width; -- output data width      (Note, W+SR <= N+M+4)
            SR            : integer := 1; -- data shift right before output
            --bpp           : integer := 8; -- bit per pixel
@@ -83,6 +83,9 @@ signal en_out  : std_logic;
 signal sof_out : std_logic; -- start of frame
 
 signal enreg   : std_logic_vector(  7 downto 0) := x"C7";
+
+
+signal init_w_done : std_logic := '0';
 begin
 
 
@@ -135,43 +138,75 @@ rst <= '1', '0' after 10 ns;
 
 process        
    begin   
-     wait for 5 ns;w_unit_n <= conv_std_logic_vector( 0, w_unit_n'length);
-     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector(  1, w_num'length); w_in <= conv_std_logic_vector( 1, w_in'length); 
-     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector(  2, w_num'length); w_in <= conv_std_logic_vector( 2, w_in'length); 
-     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector(  3, w_num'length); w_in <= conv_std_logic_vector( 3, w_in'length); 
-     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector(  4, w_num'length); w_in <= conv_std_logic_vector( 4, w_in'length); 
-     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector(  5, w_num'length); w_in <= conv_std_logic_vector( 5, w_in'length); 
-     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector(  6, w_num'length); w_in <= conv_std_logic_vector( 6, w_in'length); 
-     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector(  7, w_num'length); w_in <= conv_std_logic_vector( 7, w_in'length); 
-     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector(  8, w_num'length); w_in <= conv_std_logic_vector( 8, w_in'length); 
-     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector(  9, w_num'length); w_in <= conv_std_logic_vector( 9, w_in'length); 
-     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 10, w_num'length); w_in <= conv_std_logic_vector(10, w_in'length); 
-     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 11, w_num'length); w_in <= conv_std_logic_vector(11, w_in'length); 
-     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 12, w_num'length); w_in <= conv_std_logic_vector(12, w_in'length); 
-     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 13, w_num'length); w_in <= conv_std_logic_vector(13, w_in'length); 
-     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 14, w_num'length); w_in <= conv_std_logic_vector(14, w_in'length); 
-     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 15, w_num'length); w_in <= conv_std_logic_vector(15, w_in'length); 
-     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 16, w_num'length); w_in <= conv_std_logic_vector(16, w_in'length); 
-     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 17, w_num'length); w_in <= conv_std_logic_vector(17, w_in'length); 
-     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 18, w_num'length); w_in <= conv_std_logic_vector(18, w_in'length); 
-     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 19, w_num'length); w_in <= conv_std_logic_vector(19, w_in'length); 
-     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 20, w_num'length); w_in <= conv_std_logic_vector(20, w_in'length); 
-     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 21, w_num'length); w_in <= conv_std_logic_vector(21, w_in'length); 
-     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 22, w_num'length); w_in <= conv_std_logic_vector(22, w_in'length); 
-     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 23, w_num'length); w_in <= conv_std_logic_vector(23, w_in'length); 
-     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 24, w_num'length); w_in <= conv_std_logic_vector(24, w_in'length); 
-     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 25, w_num'length); w_in <= conv_std_logic_vector(25, w_in'length); 
-wait for 10 ns;  w_en <= '0'; w_unit_n <= conv_std_logic_vector( 1, w_unit_n'length);
-     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 1, w_num'length); w_in <= conv_std_logic_vector(21, w_in'length); 
-     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 2, w_num'length); w_in <= conv_std_logic_vector(22, w_in'length); 
-     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 3, w_num'length); w_in <= conv_std_logic_vector(23, w_in'length); 
-     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 4, w_num'length); w_in <= conv_std_logic_vector(24, w_in'length); 
-     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 5, w_num'length); w_in <= conv_std_logic_vector(25, w_in'length); 
-     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 6, w_num'length); w_in <= conv_std_logic_vector(26, w_in'length); 
-     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 7, w_num'length); w_in <= conv_std_logic_vector(27, w_in'length); 
-     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 8, w_num'length); w_in <= conv_std_logic_vector(28, w_in'length); 
-     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 9, w_num'length); w_in <= conv_std_logic_vector(29, w_in'length); 
-wait for 10 ns;  w_en <= '0'; 
+--     wait for 2 ns;           w_unit_n <= conv_std_logic_vector( 0, w_unit_n'length);
+--     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector(  1, w_num'length); w_in <= conv_std_logic_vector( 1, w_in'length); 
+--     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector(  2, w_num'length); w_in <= conv_std_logic_vector( 2, w_in'length); 
+--     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector(  3, w_num'length); w_in <= conv_std_logic_vector( 3, w_in'length); 
+--     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector(  4, w_num'length); w_in <= conv_std_logic_vector( 4, w_in'length); 
+--     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector(  5, w_num'length); w_in <= conv_std_logic_vector( 5, w_in'length); 
+--     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector(  6, w_num'length); w_in <= conv_std_logic_vector( 6, w_in'length); 
+--     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector(  7, w_num'length); w_in <= conv_std_logic_vector( 7, w_in'length); 
+--     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector(  8, w_num'length); w_in <= conv_std_logic_vector( 8, w_in'length); 
+--     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector(  9, w_num'length); w_in <= conv_std_logic_vector( 9, w_in'length); 
+--     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 10, w_num'length); w_in <= conv_std_logic_vector(10, w_in'length); 
+--     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 11, w_num'length); w_in <= conv_std_logic_vector(11, w_in'length); 
+--     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 12, w_num'length); w_in <= conv_std_logic_vector(12, w_in'length); 
+--     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 13, w_num'length); w_in <= conv_std_logic_vector(13, w_in'length); 
+--     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 14, w_num'length); w_in <= conv_std_logic_vector(14, w_in'length); 
+--     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 15, w_num'length); w_in <= conv_std_logic_vector(15, w_in'length); 
+--     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 16, w_num'length); w_in <= conv_std_logic_vector(16, w_in'length); 
+--     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 17, w_num'length); w_in <= conv_std_logic_vector(17, w_in'length); 
+--     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 18, w_num'length); w_in <= conv_std_logic_vector(18, w_in'length); 
+--     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 19, w_num'length); w_in <= conv_std_logic_vector(19, w_in'length); 
+--     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 20, w_num'length); w_in <= conv_std_logic_vector(20, w_in'length); 
+--     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 21, w_num'length); w_in <= conv_std_logic_vector(21, w_in'length); 
+--     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 22, w_num'length); w_in <= conv_std_logic_vector(22, w_in'length); 
+--     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 23, w_num'length); w_in <= conv_std_logic_vector(23, w_in'length); 
+--     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 24, w_num'length); w_in <= conv_std_logic_vector(24, w_in'length); 
+--     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 25, w_num'length); w_in <= conv_std_logic_vector(25, w_in'length); 
+--wait for 10 ns;  w_en <= '0'; w_unit_n <= conv_std_logic_vector( 1, w_unit_n'length);
+--     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector(  1, w_num'length); w_in <= conv_std_logic_vector( 2, w_in'length); 
+--     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector(  2, w_num'length); w_in <= conv_std_logic_vector( 3, w_in'length); 
+--     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector(  3, w_num'length); w_in <= conv_std_logic_vector( 4, w_in'length); 
+--     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector(  4, w_num'length); w_in <= conv_std_logic_vector( 5, w_in'length); 
+--     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector(  5, w_num'length); w_in <= conv_std_logic_vector( 6, w_in'length); 
+--     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector(  6, w_num'length); w_in <= conv_std_logic_vector( 7, w_in'length); 
+--     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector(  7, w_num'length); w_in <= conv_std_logic_vector( 8, w_in'length); 
+--     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector(  8, w_num'length); w_in <= conv_std_logic_vector( 9, w_in'length); 
+--     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector(  9, w_num'length); w_in <= conv_std_logic_vector(10, w_in'length); 
+--     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 10, w_num'length); w_in <= conv_std_logic_vector(11, w_in'length); 
+--     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 11, w_num'length); w_in <= conv_std_logic_vector(12, w_in'length); 
+--     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 12, w_num'length); w_in <= conv_std_logic_vector(13, w_in'length); 
+--     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 13, w_num'length); w_in <= conv_std_logic_vector(14, w_in'length); 
+--     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 14, w_num'length); w_in <= conv_std_logic_vector(15, w_in'length); 
+--     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 15, w_num'length); w_in <= conv_std_logic_vector(16, w_in'length); 
+--     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 16, w_num'length); w_in <= conv_std_logic_vector(17, w_in'length); 
+--     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 17, w_num'length); w_in <= conv_std_logic_vector(18, w_in'length); 
+--     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 18, w_num'length); w_in <= conv_std_logic_vector(19, w_in'length); 
+--     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 19, w_num'length); w_in <= conv_std_logic_vector(20, w_in'length); 
+--     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 20, w_num'length); w_in <= conv_std_logic_vector(21, w_in'length); 
+--     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 21, w_num'length); w_in <= conv_std_logic_vector(22, w_in'length); 
+--     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 22, w_num'length); w_in <= conv_std_logic_vector(23, w_in'length); 
+--     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 23, w_num'length); w_in <= conv_std_logic_vector(24, w_in'length); 
+--     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 24, w_num'length); w_in <= conv_std_logic_vector(25, w_in'length); 
+--     wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( 25, w_num'length); w_in <= conv_std_logic_vector(26, w_in'length); 
+--wait for 10 ns;  w_en <= '0'; w_unit_n <= conv_std_logic_vector( 2, w_unit_n'length);
+--    gen_3_in: for I in 1 to 25 loop
+--        wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( I, w_num'length); w_in <= conv_std_logic_vector(I+2, w_in'length); 
+--    end loop gen_3_in;
+
+
+    gen_inputs: for k in 0 to CL_inputs-1 loop
+       gen_outputs: for j in 0 to CL_outs-1 loop
+          wait for 10 ns;  w_en <= '0'; w_unit_n <= conv_std_logic_vector( j*256+k, w_unit_n'length);
+          gen_w: for i in 1 to 25 loop
+              wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( i, w_num'length); w_in <= conv_std_logic_vector(i+j+k, w_in'length); 
+          end loop gen_w;
+       end loop gen_outputs;
+    end loop gen_inputs;
+
+     wait for 10 ns; init_w_done <= '1';
+wait for 1000 ns;  w_en <= '0'; 
 end process;
 
 
@@ -198,7 +233,8 @@ begin
 --  data2conv8  <= conv_std_logic_vector(8, w8'length);
 --  data2conv9  <= conv_std_logic_vector(9, w9'length);
 
-  wait until rst = '0';
+  --wait until rst = '0';
+  wait until init_w_done = '1';
 --    w_num <= conv_std_logic_vector( 0, w_num'length);
 --    w_in  <= conv_std_logic_vector( 5, w_in'length);
  --   d_in <= conv_std_logic_vector( 13, d_in'length);

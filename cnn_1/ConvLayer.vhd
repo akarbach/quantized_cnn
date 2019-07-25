@@ -332,7 +332,8 @@ signal sof_out1   : t_mat;                                            -- std_log
 signal countI      : std_logic_vector (9 downto 0);
 signal countJ      : std_logic_vector (9 downto 0);
 
-
+signal en_sums     : std_logic;
+signal sof_sums    : std_logic;
 
 begin
 
@@ -351,11 +352,13 @@ begin
       for j in 0 to CL_inputs-1 loop
          for i in 0 to CL_outs-1 loop
             if w_en = '1' then
-               if w_unit_input = i and w_unit_output = j then 
+               if w_unit_input = j and w_unit_output = i then 
                   w_unit_en(j)(i) <= '1';
                else 
                   w_unit_en(j)(i) <= '0';
                end if;
+            else
+               w_unit_en(j)(i) <= '0';
             end if;
          end loop;
       end loop;
@@ -557,8 +560,8 @@ adder: multi_adder
            sof_in      => sof_out1(0)(0),
 
            d_out       => d_sums        ,
-           en_out      => en_out        ,
-           sof_out     => sof_out
+           en_out      => en_sums       ,
+           sof_out     => sof_sums
            );
 
   p_out : process (clk,rst)
@@ -578,8 +581,8 @@ adder: multi_adder
        else
           countI <= countI + 1;
        end if;
-  --     en_out  <= en_out1 (0)(0);
-  --     sof_out <= sof_out1(0)(0);
+       en_out  <= en_sums ;
+       sof_out <= sof_sums;
     end if;
   end process p_out;
 
