@@ -16,8 +16,6 @@ entity Linear1_tb is
            N             : integer := 4;    -- input/output data width
            M             : integer := 4;    -- input weight width
            SR            : integer := 2;    -- data shift right before output
-           addr_w        : integer := 12;   -- number of address bits in weight matrix
-           line_w        : integer :=  8;   -- number of address bits in weight line
            in_row        : integer :=  2;
            in_col        : integer :=  2
   	       );
@@ -36,8 +34,6 @@ component Linear1 is
            N             : integer := 8;    -- input/output data width
            M             : integer := 8;    -- input weight width
            SR            : integer := 2;    -- data shift right before output
-           addr_w        : integer := 12;   -- number of address bits in weight matrix
-           line_w        : integer :=  8;   -- number of address bits in weight line
            in_row        : integer :=  2;
            in_col        : integer :=  2
            );
@@ -141,16 +137,21 @@ process
      end loop gen_w1;
 
      wait for 10 ns;                     w_lin_rdy <= '0'; 
-
+     wait for 10 ns;  
 -- Frame 1
     data_fr: for k in 0 to 5 loop
-    en_in <= '1';
+    --en_in <= '1';
     --sign_p <= (-1) * sign_p;
     data_cl: for j in 0 to in_row * in_col -1 loop
+    en_in <= '1';
       data_ch: for i in 0 to CL_inputs-1 loop
-        d_in(i) <= conv_std_logic_vector((i+j+k+1)*sign_p, N);
+        d_in(i) <= conv_std_logic_vector((100*i+j+k+1)*sign_p, N);
       end loop data_ch;
     wait for 10 ns;
+    en_in <= '0';
+    wait for 10 ns; 
+    wait for 10 ns;
+    wait for 10 ns; 
     end loop data_cl;
     en_in <= '0';
     --data_0: for i in 0 to CL_inputs-1 loop
@@ -227,8 +228,6 @@ dut: Linear1 generic map(
            N           => N        ,
            M           => M        , 
            SR          => SR       ,
-           addr_w      => addr_w   ,
-           line_w      => line_w   ,
            in_row      => in_row   ,
            in_col      => in_col   
            )

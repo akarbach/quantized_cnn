@@ -709,7 +709,8 @@ end process p_relu;
     if rising_edge(clk) then
        ovf_for: for i in 0 to CL_outs-1 loop
           --if d_relu(i)(d_relu'left  downto W + SR -2) = 0  then 
-          if d_relu(i)(d_reluM  downto W + SR -2) = 0  then
+          --if d_relu(i)(d_reluM  downto W + SR -2) = 0  then 
+          if d_relu(i)(d_reluM  downto W + SR) = 0  then
              d_ovf(i) <= d_relu(i);
           else
              --d_ovf(i)( d_relu'left  downto W + SR -2 ) <= (others => '0'); 

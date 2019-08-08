@@ -9,4 +9,4 @@ vcom -2008 -work work  ConvLayer.vhd
 vcom -2008 -work work  ConvLayer_tb.vhd
 vsim work.ConvLayer_tb
 do wave.do
-run 1000ns
+run 3000ns

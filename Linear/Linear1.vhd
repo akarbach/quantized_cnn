@@ -11,13 +11,11 @@ entity Linear1 is
            BP            : string := "no";  --"no"/"yes"  -- Bypass
            TP            : string := "no";  --"no"/"yes"  -- Test pattern output
            mult_sum      : string := "mult"; --"mult"/"sum"
-           CL_inputs     : integer := 4;    -- number of inputs features (maximum = 256)
-           CL_outs       : integer := 4;    -- number of output features
+           CL_inputs     : integer := 16;    -- number of inputs features (maximum = 256)
+           CL_outs       : integer := 10;    -- number of output features
            N             : integer := 8;    -- input/output data width
            M             : integer := 8;    -- input weight width
            SR            : integer := 2;    -- data shift right before output
-           addr_w        : integer := 12;   -- number of address bits in weight matrix
-           line_w        : integer :=  8;   -- number of address bits in weight line
            in_row        : integer :=  5;   -- max value in_row * in_col = 256
            in_col        : integer :=  5    -- max value in_row * in_col = 256
   	       );
@@ -58,7 +56,7 @@ constant max_input_num: integer := 256;
 constant matrix_depth : integer := in_row * in_col;
 constant W            : integer := N;  -- output width
 
-signal   address     : integer := 0;
+signal   address, address_d     : integer;
 
 signal   weight_mat  : mat(0 to matrix_depth-1)(0 to CL_outs * CL_inputs -1)(M-1 downto 0);
 --signal   weight_mat  : mat(0 to CL_outs * CL_inputs-1)(0 to CL_outs * CL_inputs -1)(M-1 downto 0);
@@ -131,8 +129,10 @@ end process w_lin_p;
 fifo_ctl_p: process (clk,rst)
 begin
   if rst = '1' then
-     address  <= 0;
+     address   <= 0;
+     address_d <= 0;
   elsif rising_edge(clk) then
+     address_d <= address;
      if en_in = '1' then
         if conv_integer(address) = matrix_depth - 1 then
            address <= 0;
@@ -166,7 +166,8 @@ gen_Mults: if mult_sum = "mult" generate
      elsif rising_edge(clk) then
         en_mult  <= en_in;
         sof_mult <= sof_in;
-        if conv_integer(address) = matrix_depth - 1 then
+        --if conv_integer(address) = matrix_depth - 1 then
+        if conv_integer(address) = 0 and address_d /= 0 then
            eof_mult <= '1';
         else
            eof_mult <= '0';
@@ -583,6 +584,18 @@ end generate add4l;
                  acc(i) <= acc(i) + mult_sum01(i);
               end if;
            end if; 
+
+           --if en_acc = '1' then
+           --   if en_01 = '0' then                 -- wait state after enf of current state
+           --      acc(i) <= (others => '0');
+           --   else                                -- new frame immediately after the current
+           --      acc(i) <= mult_sum01(i);
+           --   end if; 
+           --else
+           --   if en_01 = '1' then
+           --      acc(i) <= acc(i) + mult_sum01(i);
+           --   end if;
+           --end if; 
         end loop input_mult_for;
      end if;
    end process acc_p;
@@ -659,11 +672,11 @@ end process en_p;
   begin
     if rising_edge(clk) then
        ovf_for: for i in 0 to CL_outs-1 loop
-          if d_relu(i)(d_relu'left  downto W + SR -2) = 0  then
+          if d_relu(i)(accM  downto W + SR -2) = 0  then
              d_ovf(i) <= d_relu(i);
           else
-             d_ovf(i)( d_relu'left  downto W + SR -2 ) <= (others => '0'); 
-             d_ovf(i)( W + SR - 3   downto         0 ) <= (others => '1'); 
+             d_ovf(i)(     accM   downto W + SR -1 ) <= (others => '0'); 
+             d_ovf(i)( W + SR - 2 downto         0 ) <= (others => '1'); 
           end if;
        end loop ovf_for;
     end if;

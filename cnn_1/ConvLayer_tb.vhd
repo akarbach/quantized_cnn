@@ -11,7 +11,7 @@ entity ConvLayer_tb is
            BP            : string := "no";  --"no"/"yes"  -- Bypass
            TP            : string := "no";  --"no"/"yes"  -- Test pattern output
            mult_sum      : string := "mult"; --"sum"/"mult";
-           Kernel_size   : integer := 5; -- 3/5
+           Kernel_size   : integer := 3; -- 3/5
            zero_padding  : string := "yes";  --"no"/"yes"
            CL_inputs     : integer := 3; -- number of inputs features
            CL_outs       : integer := 2; -- number of output features
@@ -19,9 +19,9 @@ entity ConvLayer_tb is
            N             : integer := all_width; -- input data width
            M             : integer := 5; -- input weight width
            W             : integer := all_width; -- output data width      (Note, W+SR <= N+M+4)
-           SR            : integer := 1; -- data shift right before output
+           SR            : integer := 4; -- data shift right before output
            --bpp           : integer := 8; -- bit per pixel
-           in_row        : integer := 17;
+           in_row        : integer := 7;
            in_col        : integer := 8
            );
 end entity ConvLayer_tb;
@@ -199,8 +199,9 @@ process
     gen_inputs: for k in 0 to CL_inputs-1 loop
        gen_outputs: for j in 0 to CL_outs-1 loop
           wait for 10 ns;  w_en <= '0'; w_unit_n <= conv_std_logic_vector( j*256+k, w_unit_n'length);
-          gen_w: for i in 1 to 25 loop
-              wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( i, w_num'length); w_in <= conv_std_logic_vector(i+j+k, w_in'length); 
+          --gen_w: for i in 1 to 25 loop
+          gen_w: for i in 1 to 9 loop
+              wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( i, w_num'length); w_in <= conv_std_logic_vector(i+j+k+1, w_in'length); 
           end loop gen_w;
        end loop gen_outputs;
     end loop gen_inputs;

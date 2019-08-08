@@ -40,7 +40,7 @@ entity ConvLayer is
            w_num   : in std_logic_vector(  4 downto 0);  -- number of weight
            w_en    : in std_logic;
 
-           d_out   : out std_logic_vector (W-1 downto 0); --vec;
+           d_out   : out vec(0 to CL_outs -1)(W-1 downto 0); --std_logic_vector (W-1 downto 0); --vec;
            en_out  : out std_logic;
            sof_out : out std_logic);
 end ConvLayer;
@@ -321,7 +321,7 @@ type d_out_vec is array (natural range 0 to CL_outs -1) of std_logic_vector(W-1 
 type d_out_mat is array (natural range 0 to (CL_inputs -1)) of d_out_vec;
 --signal d_out1     : d_out_mat;                                      --vec;
 signal d_out1     : mat(0 to CL_inputs-1)(0 to CL_outs -1)(N + M +4  downto 0);                                      --vec;
---signal d_sums     : d_out_vec; --vec;
+
 signal d_sums     : vec(0 to CL_outs -1)(W-1 downto 0);
 signal w_unit_en  : vec(0 to CL_inputs -1)(CL_outs-1 downto 0);
 
@@ -564,26 +564,30 @@ adder: multi_adder
            sof_out     => sof_sums
            );
 
-  p_out : process (clk,rst)
-  begin
-    if rst = '1' then
-       countI     <= (others => '0');
-       countJ     <= (others => '0');
-    elsif rising_edge(clk) then
-       d_out <= d_sums(conv_integer('0' & countJ));
-       if countI = CL_outs - 1 then
-          countI <= (others => '0');
-          if countJ = CL_inputs - 1 then
-             countJ <= (others => '0');
-          else
-             countJ <= countJ + countJ;
-          end if;
-       else
-          countI <= countI + 1;
-       end if;
-       en_out  <= en_sums ;
-       sof_out <= sof_sums;
-    end if;
-  end process p_out;
+--  p_out : process (clk,rst)
+--  begin
+--    if rst = '1' then
+--       countI     <= (others => '0');
+--       countJ     <= (others => '0');
+--    elsif rising_edge(clk) then
+--       d_out <= d_sums(conv_integer('0' & countJ));
+--       if countI = CL_outs - 1 then
+--          countI <= (others => '0');
+--          if countJ = CL_inputs - 1 then
+--             countJ <= (others => '0');
+--          else
+--             countJ <= countJ + countJ;
+--          end if;
+--       else
+--          countI <= countI + 1;
+--       end if;
+--       en_out  <= en_sums ;
+--       sof_out <= sof_sums;
+--    end if;
+--  end process p_out;
+
+d_out <= d_sums;
+en_out  <= en_sums ;
+sof_out <= sof_sums;
 
 end a;
