@@ -710,12 +710,12 @@ end process p_relu;
        ovf_for: for i in 0 to CL_outs-1 loop
           --if d_relu(i)(d_relu'left  downto W + SR -2) = 0  then 
           --if d_relu(i)(d_reluM  downto W + SR -2) = 0  then 
-          if d_relu(i)(d_reluM  downto W + SR) = 0  then
+          if d_relu(i)(d_reluM  downto W + SR -1) = 0  then
              d_ovf(i) <= d_relu(i);
           else
              --d_ovf(i)( d_relu'left  downto W + SR -2 ) <= (others => '0'); 
-             d_ovf(i)( d_ovfM  downto W + SR -2 ) <= (others => '0'); 
-             d_ovf(i)( W + SR - 3   downto         0 ) <= (others => '1'); 
+             d_ovf(i)( d_ovfM  downto W + SR -1 ) <= (others => '0'); 
+             d_ovf(i)( W + SR - 2   downto         0 ) <= (others => '1'); 
           end if;
        end loop ovf_for;
     end if;

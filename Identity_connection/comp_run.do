@@ -1,0 +1,14 @@
+vcom -2008 -work work  ../cnn_1/ConvLayer_types_package.vhd
+vcom -2008 -work work  ../multi_adder/multi_adder.vhd
+vcom -2008 -work work  ../multiplier_parallel/mult.vhd
+vcom -2008 -work work  ../multiplier_parallel/generic_mult.vhd
+vcom -2008 -work work  ../Fifo/Fifo.vhd
+vcom -2008 -work work  ../cnn_1/ConvLayer_data_gen.vhd
+vcom -2008 -work work  ../cnn_1/ConvLayer_weight_gen.vhd
+vcom -2008 -work work  ../cnn_1/ConvLayer_calc.vhd
+vcom -2008 -work work  ../cnn_1/ConvLayer.vhd
+vcom -2008 -work work  Identity_connection.vhd
+vcom -2008 -work work  Identity_connection_tb.vhd
+vsim work.Identity_connection_tb
+do wave.do
+run 10000ns
