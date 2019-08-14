@@ -8,21 +8,21 @@ use work.ConvLayer_types_package.all;
 
 entity Identity_connection is
   generic (
-           Relu          : string := "yes";  --"no"/"yes"  -- nonlinear Relu function
            BP            : string := "no";   --"no"/"yes"  -- Bypass
            TP            : string := "no";   --"no"/"yes"  -- Test pattern output
            mult_sum      : string := "mult"; --"mult"/"sum";
            Kernel_size   : integer :=  5; -- 3/5
            CL_inputs     : integer := 32; -- number of inputs features
-           NumOfLayers   : integer := 2; --1/2/3/4 -- number of CL layers
+           NumOfLayers   : integer := 2; --1..8 -- number of CL layers
 
            N             : integer := 8; --W; -- input data width
            M             : integer := 8; --W; -- input weight width
            W             : integer := 8; --         output data width      (Note, W+SR <= N+M+4)
-           SR_cl         : integer := 1; -- 0/1  -- CL unit.  data shift right before output (deleted LSBs)
+           SR_cl         : int_array := (5,5,5,5); -- CL0, CL1,  CL2, CL3 units.  data shift right before output (deleted LSBs)
+           --SR_cl         : integer := 1; -- 0/1  -- CL unit.  data shift right before output (deleted LSBs)
            SR_sum        : integer := 1; -- Sum unit. data shift right before output (deleted LSBs)
-           in_row        : integer := 32;
-           in_col        : integer := 32
+           in_row        : integer := 5;
+           in_col        : integer := 5
            );
   port    (
            clk     : in std_logic;
@@ -38,7 +38,7 @@ entity Identity_connection is
            w_num       : in std_logic_vector(  4 downto 0);  -- number of weight
            w_en        : in std_logic;
            w_lin_rdy   : in std_logic; 
-           w_CL_select : in std_logic_vector(  1 downto 0);
+           w_CL_select : in std_logic_vector(  2 downto 0); -- number of CL layer
 
            d_out   : out vec(0 to CL_inputs -1)(N-1 downto 0); --vec;
            en_out  : out std_logic;
@@ -106,7 +106,7 @@ constant  zero_padding  : string := "yes";  --"no"/"yes"
 signal  w_unit_n_s : std_logic_vector( 15 downto 0);  -- address weight generators,  8MSB - CL inputs, 8LSB - CL outputs
 signal  w_in_s     : std_logic_vector(M-1 downto 0);  -- value
 signal  w_num_s    : std_logic_vector(  4 downto 0);  -- number of weight
-signal  w_en_s     : std_logic_vector(  3 downto 0); 
+signal  w_en_s     : std_logic_vector(  7 downto 0); 
 signal  d_in1      : mat(0 to NumOfLayers)(0 to CL_inputs -1)(N-1  downto 0);    
 --signal  d_out1     : mat(0 to NumOfLayers  )(0 to CL_inputs -1)(N + M +4  downto 0);    
 signal  en_in1     : std_logic_vector(NumOfLayers downto 0);  
@@ -116,9 +116,11 @@ signal d_out0    : vec(0 to CL_inputs -1)(N-1 downto 0);
 signal d_out1    : vec(0 to CL_inputs -1)(N-1 downto 0);
 signal short_out : vec(0 to CL_inputs -1)(N-1 downto 0);
 
-signal     en_s  : std_logic;
-signal     sof_s : std_logic;
-signal     d_s   : vec(0 to CL_inputs -1)(N-1 downto 0);
+signal  en_s , en_relu  : std_logic;
+signal  sof_s, sof_relu : std_logic;
+signal  d_s      : vec(0 to CL_inputs -1)(N-1 downto 0);
+signal  d_sum    : vec(0 to CL_inputs -1)(N   downto 0); 
+signal  d_relu   : vec(0 to CL_inputs -1)(N   downto 0); 
 
 begin
 
@@ -146,10 +148,10 @@ d_in1(0)  <= d_in;
 en_in1(0) <= en_in ;
 sof_in1(0)<= sof_in;
 
-gen_CL: for i in 0 to NumOfLayers-1 generate
+gen_CL: for i in 0 to NumOfLayers-2 generate
 CLi: ConvLayer 
   generic map (
-           Relu          => Relu         ,
+           Relu          => "yes"        ,
            BP            => BP           ,
            TP            => TP           ,
            mult_sum      => mult_sum     ,
@@ -160,7 +162,7 @@ CLi: ConvLayer
            N             => N            ,
            M             => M            ,
            W             => W            ,
-           SR            => SR_cl        ,
+           SR            => SR_cl(i)     ,
            in_row        => in_row       ,
            in_col        => in_col
            )
@@ -178,6 +180,37 @@ CLi: ConvLayer
            en_out        => en_in1(i+1)   ,
            sof_out       => sof_in1(i+1));
 end generate gen_CL;
+
+CL_last: ConvLayer 
+  generic map (
+           Relu          => "no"                  ,
+           BP            => BP                    ,
+           TP            => TP                    ,
+           mult_sum      => mult_sum              ,
+           Kernel_size   => Kernel_size           ,
+           zero_padding  => zero_padding          ,
+           CL_inputs     => CL_inputs             ,
+           CL_outs       => CL_inputs             ,
+           N             => N                     ,
+           M             => M                     ,
+           W             => W                     ,
+           SR            => SR_cl(NumOfLayers-1)  ,
+           in_row        => in_row                ,
+           in_col        => in_col
+           )
+  port map   (
+           clk           => clk                   ,
+           rst           => rst                   , 
+           d_in          => d_in1  (NumOfLayers-1),
+           en_in         => en_in1 (NumOfLayers-1),
+           sof_in        => sof_in1(NumOfLayers-1),
+           w_unit_n      => w_unit_n_s            ,
+           w_in          => w_in_s                ,
+           w_num         => w_num_s               ,
+           w_en          => w_en_s(NumOfLayers)   ,
+           d_out         => d_in1(NumOfLayers)    ,
+           en_out        => en_in1(NumOfLayers)   ,
+           sof_out       => sof_in1(NumOfLayers)) ;
 
 p_sample_CLs : process(Clk,rst)
 begin
@@ -202,11 +235,15 @@ end process p_sample_CLs2;
 p_adder : process(Clk,rst)
 begin
   if(rst = '1') then
-     en_out  <= '0';
-     sof_out <= '0';
+     en_out   <= '0';
+     sof_out  <= '0';
+     en_relu  <= '0'; 
+     sof_relu <= '0'; 
   elsif(rising_edge(Clk)) then
-     en_out  <= en_s ;
-     sof_out <= sof_s;
+     en_relu  <= en_s ;
+     sof_relu <= sof_s;
+     en_out   <= en_relu ;
+     sof_out  <= sof_relu;
   end if; 
 end process p_adder;
 
@@ -215,10 +252,35 @@ p_adder2 : process(Clk,rst)
 begin
   if(rising_edge(Clk)) then
      shortcut_adder: for i in 0 to CL_inputs -1 loop
-        d_out(i)   <= d_s(i) + short_out(i);
+        d_sum(i)   <= (d_s(i)(N-1) & d_s(i)) + (short_out(i)(N-1) & short_out(i));
      end loop shortcut_adder;
   end if; 
 end process p_adder2;
+
+p_relu : process(Clk,rst)
+begin
+  if(rising_edge(Clk)) then
+     shortcut_adder: for i in 0 to CL_inputs -1 loop
+          relu_bits_for: for j in 0 to N loop
+             d_relu(i)(j) <= d_sum(i)(j) and not d_sum(i)(N);    -- if MSB=1 (negative) thwen all bits are 0 
+          end loop relu_bits_for;
+     end loop shortcut_adder;
+  end if; 
+end process p_relu;
+
+p_SR_sum : process(d_relu)
+begin
+   shortcut_adder: for i in 0 to CL_inputs -1 loop
+      if SR_sum = 1 then
+         d_out(i)   <= d_relu(i)(N-1+SR_sum downto SR_sum);
+      elsif d_relu(i)(N) = d_relu(i)(N-1) then             -- SR = 0, check sign
+        d_out(i)   <= d_relu(i)(N-1+SR_sum downto SR_sum); -- sign cutback
+      else 
+        d_out(i)(N-1)          <= '0';                    --overflow, d_out gets max value
+        d_out(i)(N-2 downto 0) <= (others => '1');
+      end if;
+   end loop shortcut_adder;
+end process p_SR_sum;
 
 -----------------------------------------------------------------
 p_w_init : process(Clk,rst)
@@ -234,10 +296,14 @@ elsif(rising_edge(Clk)) then
     w_num_s    <= w_num   ;
     if w_en = '1' then
        case w_CL_select is
-          when "00"   => w_en_s <= "0001";
-          when "01"   => w_en_s <= "0010";
-          when "10"   => w_en_s <= "0100";
-          when others => w_en_s <= "1000";
+          when "000"   => w_en_s <= "00000001";
+          when "001"   => w_en_s <= "00000010";
+          when "010"   => w_en_s <= "00000100";
+          when "011"   => w_en_s <= "00001000";
+          when "100"   => w_en_s <= "00010000";
+          when "101"   => w_en_s <= "00100000";
+          when "110"   => w_en_s <= "01000000";
+          when others  => w_en_s <= "10000000";
        end case; 
     else
        w_en_s <= (others => '0');

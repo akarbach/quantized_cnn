@@ -8,7 +8,6 @@ use work.ConvLayer_types_package.all;
 
 entity Identity_connection_tb is
     generic (
-           Relu          : string := "yes";  --"no"/"yes"  -- nonlinear Relu function
            BP            : string := "no";   --"no"/"yes"  -- Bypass
            TP            : string := "no";   --"no"/"yes"  -- Test pattern output
            mult_sum      : string := "mult"; --"mult"/"sum";
@@ -19,8 +18,9 @@ entity Identity_connection_tb is
            N             : integer := 8; --W; -- input data width
            M             : integer := 8; --W; -- input weight width
            W             : integer := 8; --         output data width      (Note, W+SR <= N+M+4)
-           SR_cl         : integer := 9; -- CL unit.  data shift right before output (deleted LSBs)
-           SR_sum        : integer := 1; -- 0/1 -- Sum unit. data shift right before output (deleted LSBs)
+           SR_cl         : int_array := (9,6,0,0);  -- CL0, CL1,  CL2, CL3 units.  data shift right before output (deleted LSBs)
+           --SR_cl         : integer := 9; -- CL unit.  data shift right before output (deleted LSBs)
+           SR_sum        : integer := 0; -- 0/1 -- Sum unit. data shift right before output (deleted LSBs)
            in_row        : integer := 15;
            in_col        : integer := 15
            );
@@ -30,7 +30,6 @@ architecture a of Identity_connection_tb is
 
 component Identity_connection is
   generic (
-           Relu          : string := "yes";  --"no"/"yes"  -- nonlinear Relu function
            BP            : string := "no";   --"no"/"yes"  -- Bypass
            TP            : string := "no";   --"no"/"yes"  -- Test pattern output
            mult_sum      : string := "mult"; --"mult"/"sum";
@@ -41,7 +40,8 @@ component Identity_connection is
            N             : integer := 8; --W; -- input data width
            M             : integer := 8; --W; -- input weight width
            W             : integer := 8; --         output data width      (Note, W+SR <= N+M+4)
-           SR_cl         : integer := 1; -- 0/1  -- CL unit.  data shift right before output (deleted LSBs)
+           SR_cl         : int_array := (5,5,5,5); -- CL0, CL1,  CL2, CL3 units.  data shift right before output (deleted LSBs)
+           --SR_cl         : integer := 1; -- 0/1  -- CL unit.  data shift right before output (deleted LSBs)
            SR_sum        : integer := 1; -- Sum unit. data shift right before output (deleted LSBs)
            in_row        : integer := 32;
            in_col        : integer := 32
@@ -60,7 +60,7 @@ component Identity_connection is
            w_num       : in std_logic_vector(  4 downto 0);  -- number of weight
            w_en        : in std_logic;
            w_lin_rdy   : in std_logic; 
-           w_CL_select : in std_logic_vector(  1 downto 0);
+           w_CL_select : in std_logic_vector(  2 downto 0);
 
            d_out   : out vec(0 to CL_inputs -1)(N-1 downto 0); --vec;
            en_out  : out std_logic);
@@ -76,7 +76,7 @@ signal   w_in        :  std_logic_vector(M-1 downto 0);  -- value
 signal   w_num       :  std_logic_vector(  4 downto 0);  -- number of weight
 signal   w_en        :  std_logic;
 signal   w_lin_rdy   :  std_logic; 
-signal   w_CL_select :  std_logic_vector(  1 downto 0);
+signal   w_CL_select :  std_logic_vector(  2 downto 0);
 signal   d_out       :  vec(0 to CL_inputs -1)(N-1 downto 0); --vec;
 signal   en_out      :  std_logic;
 
@@ -202,7 +202,6 @@ rst <= '1', '0' after 10 ns;
 
 DUT:  Identity_connection 
   generic map(
-           Relu          => Relu         , 
            BP            => BP           , 
            TP            => TP           , 
            mult_sum      => mult_sum     , 

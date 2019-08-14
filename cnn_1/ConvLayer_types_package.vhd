@@ -11,7 +11,9 @@ package ConvLayer_types_package is
 --	type mat is array (natural range <>) of vec;
 	--type vec is array (natural range <>) of element;
 	--type mat is array (natural range <>) of vec;
+type int_array is array (0 to 3) of integer range 0 to 15;
 type vec is array (natural range <>) of std_logic_vector;
 type mat is array (natural range <>) of vec;
+--type int_array is array(natural range <>) of integer;
 
 end ConvLayer_types_package;	
