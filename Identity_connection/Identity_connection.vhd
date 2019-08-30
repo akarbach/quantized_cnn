@@ -8,11 +8,16 @@ use work.ConvLayer_types_package.all;
 
 entity Identity_connection is
   generic (
+           Pooling       : string := "yes";   --"no"/"yes"  -- Bypass
            BP            : string := "no";   --"no"/"yes"  -- Bypass
            TP            : string := "no";   --"no"/"yes"  -- Test pattern output
+           poll_criteria : string := "max"; --"max"/"average" -                    average -> TBD!!!! !
            mult_sum      : string := "mult"; --"mult"/"sum";
-           Kernel_size   : integer :=  5; -- 3/5
-           CL_inputs     : integer := 32; -- number of inputs features
+           CL_Kernel_size: integer :=  3; -- 3/5
+           P_Kernel_size : integer :=  5; -- 3/5
+           stridePool    : integer :=  2; -- stride of the pooling stage, stride of CL is 1
+           CL_inputs     : integer := 2; -- number of inputs features of the first CL
+           CL_outs       : integer := 3; -- number of output features of the first CL and all features of the next CLs
            NumOfLayers   : integer := 2; --1..8 -- number of CL layers
 
            N             : integer := 8; --W; -- input data width
@@ -30,8 +35,6 @@ entity Identity_connection is
            d_in    : in vec(0 to CL_inputs -1)(N-1 downto 0); --invec;                                      --std_logic_vector (N-1 downto 0);
            en_in   : in std_logic;
            sof_in  : in std_logic; -- start of frame
-           --sol     : in std_logic; -- start of line
-           --eof     : in std_logic; -- end of frame
 
            w_unit_n    : in std_logic_vector( 15 downto 0);  -- address weight generators,  8MSB - CL inputs, 8LSB - CL outputs
            w_in        : in std_logic_vector(M-1 downto 0);  -- value
@@ -40,7 +43,7 @@ entity Identity_connection is
            w_lin_rdy   : in std_logic; 
            w_CL_select : in std_logic_vector(  2 downto 0); -- number of CL layer
 
-           d_out   : out vec(0 to CL_inputs -1)(N-1 downto 0); --vec;
+           d_out   : out vec(0 to CL_outs -1)(N-1 downto 0); --vec;
            en_out  : out std_logic;
            sof_out : out std_logic);
 end Identity_connection;
@@ -57,6 +60,7 @@ component ConvLayer is
            mult_sum      : string := "sum"; --"mult"/"sum";
            Kernel_size   : integer := 5; -- 3/5
            zero_padding  : string := "yes";  --"no"/"yes"
+           stride        : integer := 1;
            CL_inputs     : integer := 1; -- number of inputs features
            CL_outs       : integer := 1; -- number of output features
 
@@ -101,69 +105,140 @@ port (    clk        : in std_logic;
          );
 end component;
 
+component Pooling_kernel_top is
+  generic (
+           BP            : string := "no";  --"no"/"yes"  -- Bypass
+           TP            : string := "no";  --"no"/"yes"  -- Test pattern output
+           mult_sum      : string := "sum";     
+           poll_criteria : string := "max"; --"max"/"average" -                    average -> TBD!!!! !
+           Kernel_size   : integer := 3; -- 3/5
+           zero_padding  : string := "yes";  --"no"/"yes"
+           stride        : integer := 1;
+           N             : integer := 8; -- input data width
+           in_row        : integer := 256;
+           in_col        : integer := 256
+           );
+  port    (
+           clk         : in std_logic;
+           rst         : in std_logic;
+
+           d_in        : in std_logic_vector (N-1 downto 0);
+           en_in       : in std_logic;
+           sof_in      : in std_logic; -- start of frame
+
+           d_out       : out std_logic_vector (N -1 downto 0);
+           en_out      : out std_logic;
+           sof_out     : out std_logic);
+end component;
+
 constant  zero_padding  : string := "yes";  --"no"/"yes"
+constant  strideCL      : integer := 1;
 
 signal  w_unit_n_s : std_logic_vector( 15 downto 0);  -- address weight generators,  8MSB - CL inputs, 8LSB - CL outputs
 signal  w_in_s     : std_logic_vector(M-1 downto 0);  -- value
 signal  w_num_s    : std_logic_vector(  4 downto 0);  -- number of weight
 signal  w_en_s     : std_logic_vector(  7 downto 0); 
-signal  d_in1      : mat(0 to NumOfLayers)(0 to CL_inputs -1)(N-1  downto 0);    
---signal  d_out1     : mat(0 to NumOfLayers  )(0 to CL_inputs -1)(N + M +4  downto 0);    
+signal  d_in1      : mat(0 to NumOfLayers)(0 to CL_outs -1)(N-1  downto 0);    
+--signal  d_in1      : vec(0 to NumOfLayers*CL_inputs -1)(N-1  downto 0);    
+
 signal  en_in1     : std_logic_vector(NumOfLayers downto 0);  
 signal  sof_in1    : std_logic_vector(NumOfLayers downto 0);
 
-signal d_out0    : vec(0 to CL_inputs -1)(N-1 downto 0);
-signal d_out1    : vec(0 to CL_inputs -1)(N-1 downto 0);
-signal short_out : vec(0 to CL_inputs -1)(N-1 downto 0);
+signal d_out0    : vec(0 to CL_outs -1)(N-1 downto 0);
+signal d_out1    : vec(0 to CL_outs -1)(N-1 downto 0);
+signal short_out : vec(0 to CL_outs -1)(N-1 downto 0);
 
 signal  en_s , en_relu  : std_logic;
 signal  sof_s, sof_relu : std_logic;
-signal  d_s      : vec(0 to CL_inputs -1)(N-1 downto 0);
-signal  d_sum    : vec(0 to CL_inputs -1)(N   downto 0); 
-signal  d_relu   : vec(0 to CL_inputs -1)(N   downto 0); 
+signal  d_s      : vec(0 to CL_outs -1)(N-1 downto 0);
+signal  d_sum    : vec(0 to CL_outs -1)(N   downto 0); 
+signal  d_relu   : vec(0 to CL_outs -1)(N   downto 0); 
 
+signal  d_conv   : vec(0 to CL_outs -1)(N-1 downto 0); --vec;
+signal  en_conv  : std_logic;
+signal  sof_conv : std_logic;
+
+signal   maxpool_en1 : std_logic_vector (CL_outs-1 downto 0);
+signal   maxpool_sof1: std_logic_vector (CL_outs-1 downto 0);
 begin
 
+residual_yes: if CL_outs = CL_inputs generate
+   gen_shortcut: for i in 0 to CL_inputs-1 generate
+   shortcut: fifo 
+   generic map (depth      => NumOfLayers*(Kernel_size+1)/2*in_row, --: integer := 16 ;
+                burst      => 1,                    --: integer := 10 ;  -- indication for burst read (Note, depth>burst) 
+                Win        => N,                    --: integer := 16 ;
+                Wout       => N)                    --: integer := 64 );  --depth of fifo
+   port map(    clk        => clk,                  --: in std_logic;
+                rst        => rst,                  --: in std_logic;
+                enr        => en_in1 (NumOfLayers), --: in std_logic;   --enable read,should be '0' when not in use.
+                enw        => en_in,                --: in std_logic;    --enable write,should be '0' when not in use.
+                data_in    => d_in(i),                 --: in std_logic_vector  (Win -1 downto 0);     --input data
+                data_out   => short_out(i),            --: out std_logic_vector(Wout-1 downto 0);    --output data
+                burst_r    => open,                 --: out std_logic;   --set as '1' when the queue is ready for burst transaction
+                fifo_empty => open,                 --: out std_logic;   --set as '1' when the queue is empty
+                fifo_full  => open                  --: out std_logic     --set as '1' when the queue is full
+            );
+   end generate gen_shortcut;
+end generate residual_yes;
 
-gen_shortcut: for i in 0 to CL_inputs-1 generate
-shortcut: fifo 
-generic map (depth      => NumOfLayers*(Kernel_size+1)/2*in_row, --: integer := 16 ;
-             burst      => 1,                    --: integer := 10 ;  -- indication for burst read (Note, depth>burst) 
-             Win        => N,                    --: integer := 16 ;
-             Wout       => N)                    --: integer := 64 );  --depth of fifo
-port map(    clk        => clk,                  --: in std_logic;
-             rst        => rst,                  --: in std_logic;
-             enr        => en_in1 (NumOfLayers), --: in std_logic;   --enable read,should be '0' when not in use.
-             enw        => en_in,                --: in std_logic;    --enable write,should be '0' when not in use.
-             data_in    => d_in(i),                 --: in std_logic_vector  (Win -1 downto 0);     --input data
-             data_out   => short_out(i),            --: out std_logic_vector(Wout-1 downto 0);    --output data
-             burst_r    => open,                 --: out std_logic;   --set as '1' when the queue is ready for burst transaction
-             fifo_empty => open,                 --: out std_logic;   --set as '1' when the queue is empty
-             fifo_full  => open                  --: out std_logic     --set as '1' when the queue is full
-         );
-end generate gen_shortcut;
+residual_no: if CL_outs /= CL_inputs generate
+   gen_shortcut: for i in 0 to CL_outs-1 generate
+      short_out(i) <= (others => '0');
+   end generate gen_shortcut;
+end generate residual_no;
 
 
-d_in1(0)  <= d_in;
-en_in1(0) <= en_in ;
-sof_in1(0)<= sof_in;
+CL_first: ConvLayer 
+  generic map (
+           Relu          => "yes"         ,
+           BP            => BP            ,
+           TP            => TP            ,
+           mult_sum      => mult_sum      ,
+           Kernel_size   => CL_Kernel_size,
+           zero_padding  => zero_padding  ,
+           stride        => strideCL      ,
+           CL_inputs     => CL_inputs     ,
+           CL_outs       => CL_outs       ,
+           N             => N             ,
+           M             => M             ,
+           W             => W             ,
+           SR            => SR_cl(0)      ,
+           in_row        => in_row        ,
+           in_col        => in_col
+           )
+  port map   (
+           clk           => clk           ,
+           rst           => rst           , 
+           d_in          => d_in          ,
+           en_in         => en_in         ,
+           sof_in        => sof_in        ,
+           w_unit_n      => w_unit_n_s    ,
+           w_in          => w_in_s        ,
+           w_num         => w_num_s       ,
+           w_en          => w_en_s(0)     ,
+           d_out         => d_in1(1)      ,
+           en_out        => en_in1(1)     ,
+           sof_out       => sof_in1(1))   ;
 
-gen_CL: for i in 0 to NumOfLayers-2 generate
+
+gen_CL: for i in 1 to NumOfLayers-2 generate
 CLi: ConvLayer 
   generic map (
-           Relu          => "yes"        ,
-           BP            => BP           ,
-           TP            => TP           ,
-           mult_sum      => mult_sum     ,
-           Kernel_size   => Kernel_size  ,
-           zero_padding  => zero_padding ,
-           CL_inputs     => CL_inputs    ,
-           CL_outs       => CL_inputs    ,
-           N             => N            ,
-           M             => M            ,
-           W             => W            ,
-           SR            => SR_cl(i)     ,
-           in_row        => in_row       ,
+           Relu          => "yes"         ,
+           BP            => BP            ,
+           TP            => TP            ,
+           mult_sum      => mult_sum      ,
+           Kernel_size   => CL_Kernel_size,
+           zero_padding  => zero_padding  ,
+           stride        => strideCL      ,
+           CL_inputs     => CL_outs       ,
+           CL_outs       => CL_outs       ,
+           N             => N             ,
+           M             => M             ,
+           W             => W             ,
+           SR            => SR_cl(i)      ,
+           in_row        => in_row        ,
            in_col        => in_col
            )
   port map   (
@@ -187,10 +262,11 @@ CL_last: ConvLayer
            BP            => BP                    ,
            TP            => TP                    ,
            mult_sum      => mult_sum              ,
-           Kernel_size   => Kernel_size           ,
+           Kernel_size   => CL_Kernel_size        ,
            zero_padding  => zero_padding          ,
-           CL_inputs     => CL_inputs             ,
-           CL_outs       => CL_inputs             ,
+           stride        => strideCL              ,
+           CL_inputs     => CL_outs               ,
+           CL_outs       => CL_outs               ,
            N             => N                     ,
            M             => M                     ,
            W             => W                     ,
@@ -207,7 +283,7 @@ CL_last: ConvLayer
            w_unit_n      => w_unit_n_s            ,
            w_in          => w_in_s                ,
            w_num         => w_num_s               ,
-           w_en          => w_en_s(NumOfLayers)   ,
+           w_en          => w_en_s(NumOfLayers-1)   ,
            d_out         => d_in1(NumOfLayers)    ,
            en_out        => en_in1(NumOfLayers)   ,
            sof_out       => sof_in1(NumOfLayers)) ;
@@ -235,15 +311,15 @@ end process p_sample_CLs2;
 p_adder : process(Clk,rst)
 begin
   if(rst = '1') then
-     en_out   <= '0';
-     sof_out  <= '0';
+     en_conv  <= '0';
+     sof_conv <= '0';
      en_relu  <= '0'; 
      sof_relu <= '0'; 
   elsif(rising_edge(Clk)) then
      en_relu  <= en_s ;
      sof_relu <= sof_s;
-     en_out   <= en_relu ;
-     sof_out  <= sof_relu;
+     en_conv  <= en_relu ;
+     sof_conv <= sof_relu;
   end if; 
 end process p_adder;
 
@@ -251,7 +327,7 @@ end process p_adder;
 p_adder2 : process(Clk,rst)
 begin
   if(rising_edge(Clk)) then
-     shortcut_adder: for i in 0 to CL_inputs -1 loop
+     shortcut_adder: for i in 0 to CL_outs -1 loop
         d_sum(i)   <= (d_s(i)(N-1) & d_s(i)) + (short_out(i)(N-1) & short_out(i));
      end loop shortcut_adder;
   end if; 
@@ -260,7 +336,7 @@ end process p_adder2;
 p_relu : process(Clk,rst)
 begin
   if(rising_edge(Clk)) then
-     shortcut_adder: for i in 0 to CL_inputs -1 loop
+     shortcut_adder: for i in 0 to CL_outs -1 loop
           relu_bits_for: for j in 0 to N loop
              d_relu(i)(j) <= d_sum(i)(j) and not d_sum(i)(N);    -- if MSB=1 (negative) thwen all bits are 0 
           end loop relu_bits_for;
@@ -270,17 +346,60 @@ end process p_relu;
 
 p_SR_sum : process(d_relu)
 begin
-   shortcut_adder: for i in 0 to CL_inputs -1 loop
+   shortcut_adder: for i in 0 to CL_outs -1 loop
       if SR_sum = 1 then
-         d_out(i)   <= d_relu(i)(N-1+SR_sum downto SR_sum);
+         d_conv(i)   <= d_relu(i)(N-1+SR_sum downto SR_sum);
       elsif d_relu(i)(N) = d_relu(i)(N-1) then             -- SR = 0, check sign
-        d_out(i)   <= d_relu(i)(N-1+SR_sum downto SR_sum); -- sign cutback
+        d_conv(i)   <= d_relu(i)(N-1+SR_sum downto SR_sum); -- sign cutback
       else 
-        d_out(i)(N-1)          <= '0';                    --overflow, d_out gets max value
-        d_out(i)(N-2 downto 0) <= (others => '1');
+        d_conv(i)(N-1)          <= '0';                    --overflow, d_conv gets max value
+        d_conv(i)(N-2 downto 0) <= (others => '1');
       end if;
    end loop shortcut_adder;
 end process p_SR_sum;
+
+
+pooling_no: if Pooling = "no" generate
+   d_out   <= d_conv   ;
+   en_out  <= en_conv  ;
+   sof_out <= sof_conv ;
+end generate pooling_no;
+
+
+pooling_yes: if Pooling = "yes" generate
+   pool_gen: for i in 0 to CL_outs -1 generate
+      Pool: Pooling_kernel_top 
+      generic map (
+              BP            => BP            ,
+              TP            => TP            ,
+              mult_sum      => mult_sum      ,
+              poll_criteria => poll_criteria ,
+              Kernel_size   => P_Kernel_size ,
+              zero_padding  => zero_padding  ,
+              stride        => stridePool    ,
+              N             => N             ,
+              in_row        => in_row        ,
+              in_col        => in_col
+               )
+      port map (
+              clk          => clk            ,
+              rst          => rst            ,
+              d_in         => d_conv(i)      ,
+              en_in        => en_conv        ,
+              sof_in       => sof_conv       ,
+              d_out        => d_out(i)       ,
+              en_out       => maxpool_en1(i) ,
+              sof_out      => maxpool_sof1(i)
+              );
+   end generate pool_gen;
+
+   en_out  <= maxpool_en1(0);
+   sof_out <= maxpool_sof1(0);
+end generate pooling_yes;
+
+
+
+
 
 -----------------------------------------------------------------
 p_w_init : process(Clk,rst)

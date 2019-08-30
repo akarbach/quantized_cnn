@@ -7,8 +7,13 @@ vcom -2008 -work work  ../cnn_1/ConvLayer_data_gen.vhd
 vcom -2008 -work work  ../cnn_1/ConvLayer_weight_gen.vhd
 vcom -2008 -work work  ../cnn_1/ConvLayer_calc.vhd
 vcom -2008 -work work  ../cnn_1/ConvLayer.vhd
+
+vcom -2008 -work work  ../pooling_NxN/Max3.vhd
+vcom -2008 -work work  ../pooling_NxN/Pooling_calc.vhd
+vcom -2008 -work work  ../pooling_NxN/Pooling_kernel_top.vhd
+
 vcom -2008 -work work  Identity_connection.vhd
 vcom -2008 -work work  Identity_connection_tb.vhd
 vsim work.Identity_connection_tb
 do wave.do
-run 10000ns
+run 20000ns

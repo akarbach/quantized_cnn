@@ -8,21 +8,26 @@ use work.ConvLayer_types_package.all;
 
 entity Identity_connection_tb is
     generic (
+           Pooling       : string := "yes";   --"no"/"yes" -- Bypass
            BP            : string := "no";   --"no"/"yes"  -- Bypass
            TP            : string := "no";   --"no"/"yes"  -- Test pattern output
+           poll_criteria : string := "max"; --"max"/"average" -                    average -> TBD!!!! !
            mult_sum      : string := "mult"; --"mult"/"sum";
-           Kernel_size   : integer := 5; -- 3/5
+           CL_Kernel_size: integer :=  3; -- 3/5
+           P_Kernel_size : integer :=  5; -- 3/5
+           stridePool    : integer :=  2; -- stride of the pooling stage, stride of CL is 1
            CL_inputs     : integer := 4; -- number of inputs features
-           NumOfLayers   : integer := 2; --1/2/3 -- number of CL layers
+           CL_outs       : integer := 4; -- number of output features 
+           NumOfLayers   : integer := 3; --1/2/3 -- number of CL layers
 
            N             : integer := 8; --W; -- input data width
            M             : integer := 8; --W; -- input weight width
            W             : integer := 8; --         output data width      (Note, W+SR <= N+M+4)
-           SR_cl         : int_array := (9,6,0,0);  -- CL0, CL1,  CL2, CL3 units.  data shift right before output (deleted LSBs)
+           SR_cl         : int_array := (9,9,9,6);  -- CL0, CL1,  CL2, CL3 units.  data shift right before output (deleted LSBs)
            --SR_cl         : integer := 9; -- CL unit.  data shift right before output (deleted LSBs)
            SR_sum        : integer := 0; -- 0/1 -- Sum unit. data shift right before output (deleted LSBs)
-           in_row        : integer := 15;
-           in_col        : integer := 15
+           in_row        : integer := 10;
+           in_col        : integer := 10
            );
 end Identity_connection_tb;
 
@@ -30,12 +35,17 @@ architecture a of Identity_connection_tb is
 
 component Identity_connection is
   generic (
+           Pooling       : string := "no";   --"no"/"yes"  -- Bypass
            BP            : string := "no";   --"no"/"yes"  -- Bypass
            TP            : string := "no";   --"no"/"yes"  -- Test pattern output
+           poll_criteria : string := "max"; --"max"/"average" -                    average -> TBD!!!! !
            mult_sum      : string := "mult"; --"mult"/"sum";
-           Kernel_size   : integer :=  5; -- 3/5
-           CL_inputs     : integer := 64; -- number of inputs features
-           NumOfLayers   : integer := 2; --1/2/3 -- number of CL layers
+           CL_Kernel_size: integer :=  5; -- 3/5
+           P_Kernel_size : integer :=  5; -- 3/5
+           stridePool    : integer :=  2; -- stride of the pooling stage, stride of CL is 1
+           CL_inputs     : integer := 3; -- number of inputs features of the first CL
+           CL_outs       : integer := 3; -- number of output features of the first CL and all features of the next CLs
+           NumOfLayers   : integer := 2; --1..8 -- number of CL layers
 
            N             : integer := 8; --W; -- input data width
            M             : integer := 8; --W; -- input weight width
@@ -43,8 +53,8 @@ component Identity_connection is
            SR_cl         : int_array := (5,5,5,5); -- CL0, CL1,  CL2, CL3 units.  data shift right before output (deleted LSBs)
            --SR_cl         : integer := 1; -- 0/1  -- CL unit.  data shift right before output (deleted LSBs)
            SR_sum        : integer := 1; -- Sum unit. data shift right before output (deleted LSBs)
-           in_row        : integer := 32;
-           in_col        : integer := 32
+           in_row        : integer := 5;
+           in_col        : integer := 5
            );
   port    (
            clk     : in std_logic;
@@ -62,7 +72,7 @@ component Identity_connection is
            w_lin_rdy   : in std_logic; 
            w_CL_select : in std_logic_vector(  2 downto 0);
 
-           d_out   : out vec(0 to CL_inputs -1)(N-1 downto 0); --vec;
+           d_out   : out vec(0 to CL_outs -1)(N-1 downto 0); --vec;
            en_out  : out std_logic);
 end component;
 
@@ -77,7 +87,7 @@ signal   w_num       :  std_logic_vector(  4 downto 0);  -- number of weight
 signal   w_en        :  std_logic;
 signal   w_lin_rdy   :  std_logic; 
 signal   w_CL_select :  std_logic_vector(  2 downto 0);
-signal   d_out       :  vec(0 to CL_inputs -1)(N-1 downto 0); --vec;
+signal   d_out       :  vec(0 to CL_outs -1)(N-1 downto 0); --vec;
 signal   en_out      :  std_logic;
 
 --signal   init_w_done    :  std_logic := '0';
@@ -102,8 +112,8 @@ process
    --- CL0  
        gen_layers: for Num in 0 to NumOfLayers-1 loop
        wait for 10 ns; w_CL_select <= conv_std_logic_vector(Num, w_CL_select'length);
-       gen0_inputs: for k in 0 to CL_inputs-1 loop
-          gen_outputs: for j in 0 to CL_inputs-1 loop
+       gen0_inputs: for k in 0 to CL_outs-1 loop
+          gen_outputs: for j in 0 to CL_outs-1 loop
              wait for 10 ns;  w_en <= '0'; w_unit_n <= conv_std_logic_vector( j*256+k, w_unit_n'length);
              gen0_w: for i in 1 to 25 loop
              --gen_w: for i in 1 to 9 loop
@@ -140,9 +150,9 @@ process
     wait for 10 ns;
     end loop data_cl;
     en_in <= '0';
-    --data_0: for i in 0 to CL_inputs-1 loop
-    --  d_in(i) <= conv_std_logic_vector(0, N);
-    --end loop data_0;
+    data_0: for i in 0 to CL_inputs-1 loop
+      d_in(i) <= conv_std_logic_vector(0, N);
+    end loop data_0;
 --    wait for 10 ns;
 --    wait for 10 ns;
 --    wait for 10 ns;
@@ -199,36 +209,40 @@ process
 
 rst <= '1', '0' after 10 ns;
 
-
 DUT:  Identity_connection 
   generic map(
-           BP            => BP           , 
-           TP            => TP           , 
-           mult_sum      => mult_sum     , 
-           Kernel_size   => Kernel_size  , 
-           CL_inputs     => CL_inputs    ,  
-           NumOfLayers   => NumOfLayers  ,
-           N             => N            , 
-           M             => M            , 
-           W             => W            , 
-           SR_cl         => SR_cl        ,
-           SR_sum        => SR_sum       ,
-           in_row        => in_row       , 
+           Pooling       => Pooling       ,
+           BP            => BP            , 
+           TP            => TP            , 
+           poll_criteria => poll_criteria ,
+           mult_sum      => mult_sum      , 
+           Kernel_size   => CL_Kernel_size,
+           Kernel_size   => P_Kernel_size ,
+           stridePool    => stridePool    ,
+           CL_inputs     => CL_inputs     ,  
+           CL_outs       => CL_outs       ,
+           NumOfLayers   => NumOfLayers   ,
+           N             => N             , 
+           M             => M             , 
+           W             => W             , 
+           SR_cl         => SR_cl         ,
+           SR_sum        => SR_sum        ,
+           in_row        => in_row        , 
            in_col        => in_col       
            )
   port map   (
-           clk           => clk          ,
-           rst           => rst          ,
-           d_in          => d_in         ,
-           en_in         => en_in        ,
-           sof_in        => sof_in       ,
-           w_unit_n      => w_unit_n     ,
-           w_in          => w_in         ,
-           w_num         => w_num        ,
-           w_en          => w_en         ,
-           w_lin_rdy     => w_lin_rdy    ,
-           w_CL_select   => w_CL_select  ,
-           d_out         => d_out        ,
+           clk           => clk           ,
+           rst           => rst           ,
+           d_in          => d_in          ,
+           en_in         => en_in         ,
+           sof_in        => sof_in        ,
+           w_unit_n      => w_unit_n      ,
+           w_in          => w_in          ,
+           w_num         => w_num         ,
+           w_en          => w_en          ,
+           w_lin_rdy     => w_lin_rdy     ,
+           w_CL_select   => w_CL_select   ,
+           d_out         => d_out         ,
            en_out        => en_out
            );
 
