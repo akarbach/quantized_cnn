@@ -6,46 +6,47 @@ use ieee.math_real.all;
 library work;
 use work.ConvLayer_types_package.all;
 
-entity Identity_connection_tb is
+entity Identity_connection_group_tb is
     generic (
-           Pooling       : string := "yes";   --"no"/"yes" -- Bypass
            BP            : string := "no";   --"no"/"yes"  -- Bypass
            TP            : string := "no";   --"no"/"yes"  -- Test pattern output
            poll_criteria : string := "max"; --"max"/"average" -                    average -> TBD!!!! !
            mult_sum      : string := "mult"; --"mult"/"sum";
            CL_Kernel_size: integer :=  3; -- 3/5
-           P_Kernel_size : integer :=  5; -- 3/5
+           P_Kernel_size : integer :=  3; -- 3/5
            stridePool    : integer :=  2; -- stride of the pooling stage, stride of CL is 1
-           CL_inputs     : integer := 4; -- number of inputs features
-           CL_outs       : integer := 4; -- number of output features 
-           NumOfLayers   : integer := 3; --1/2/3 -- number of CL layers
+           CL_inputs     : integer := 2; -- number of inputs features of the first CL
+           CL_outs       : integer := 3; -- number of output features of the first CL and all features of the next CLs
+           NumOfGrp      : integer := 3; --1..8 -- number of Filter Groups (Identity_connection)
+           NumOfLayers   : integer := 4; --1..8 -- number of CL layers in each Filter Group
 
            N             : integer := 8; --W; -- input data width
            M             : integer := 8; --W; -- input weight width
            W             : integer := 8; --         output data width      (Note, W+SR <= N+M+4)
-           SR_cl         : int_array := (9,9,9,6);  -- CL0, CL1,  CL2, CL3 units.  data shift right before output (deleted LSBs)
-           --SR_cl         : integer := 9; -- CL unit.  data shift right before output (deleted LSBs)
-           SR_sum        : integer := 0; -- 0/1 -- Sum unit. data shift right before output (deleted LSBs)
-           in_row        : integer := 10;
-           in_col        : integer := 10
+           SR_cl         : int_array := (5,5,5,5); -- CL0, CL1,  CL2, CL3 units.  data shift right before output (deleted LSBs)
+           --SR_cl         : integer := 1; -- 0/1  -- CL unit.  data shift right before output (deleted LSBs)
+           SR_sum        : integer := 1; -- Sum unit. data shift right before output (deleted LSBs)
+           in_row        : integer := 5;
+           in_col        : integer := 5
            );
-end Identity_connection_tb;
+end Identity_connection_group_tb;
 
-architecture a of Identity_connection_tb is
+architecture a of Identity_connection_group_tb is
 
-component Identity_connection is
+component Identity_connection_group is
   generic (
-           Pooling       : string := "no";   --"no"/"yes"  -- Bypass
+           --Pooling       : string := "yes";   --"no"/"yes"  -- Bypass
            BP            : string := "no";   --"no"/"yes"  -- Bypass
            TP            : string := "no";   --"no"/"yes"  -- Test pattern output
            poll_criteria : string := "max"; --"max"/"average" -                    average -> TBD!!!! !
            mult_sum      : string := "mult"; --"mult"/"sum";
-           CL_Kernel_size: integer :=  5; -- 3/5
-           P_Kernel_size : integer :=  5; -- 3/5
+           CL_Kernel_size: integer :=  3; -- 3/5
+           P_Kernel_size : integer :=  3; -- 3/5
            stridePool    : integer :=  2; -- stride of the pooling stage, stride of CL is 1
-           CL_inputs     : integer := 3; -- number of inputs features of the first CL
+           CL_inputs     : integer := 2; -- number of inputs features of the first CL
            CL_outs       : integer := 3; -- number of output features of the first CL and all features of the next CLs
-           NumOfLayers   : integer := 2; --1..8 -- number of CL layers
+           NumOfGrp      : integer := 3; --1..8 -- number of Filter Groups (Identity_connection)
+           NumOfLayers   : integer := 4; --1..8 -- number of CL layers in each Filter Group
 
            N             : integer := 8; --W; -- input data width
            M             : integer := 8; --W; -- input weight width
@@ -57,23 +58,23 @@ component Identity_connection is
            in_col        : integer := 5
            );
   port    (
-           clk     : in std_logic;
-           rst     : in std_logic;
-           d_in    : in vec(0 to CL_inputs -1)(N-1 downto 0); --invec;                                      --std_logic_vector (N-1 downto 0);
-           en_in   : in std_logic;
-           sof_in  : in std_logic; -- start of frame
-           --sol     : in std_logic; -- start of line
-           --eof     : in std_logic; -- end of frame
+           clk           : in std_logic;
+           rst           : in std_logic;
+           d_in          : in vec(0 to CL_inputs -1)(N-1 downto 0); --invec;                                      --std_logic_vector (N-1 downto 0);
+           en_in         : in std_logic;
+           sof_in        : in std_logic; -- start of frame
 
-           w_unit_n    : in std_logic_vector( 15 downto 0);  -- address weight generators,  8MSB - CL inputs, 8LSB - CL outputs
-           w_in        : in std_logic_vector(M-1 downto 0);  -- value
-           w_num       : in std_logic_vector(  4 downto 0);  -- number of weight
-           w_en        : in std_logic;
-           w_lin_rdy   : in std_logic; 
-           w_CL_select : in std_logic_vector(  2 downto 0);
+           w_unit_n      : in std_logic_vector( 15 downto 0);  -- address weight generators,  8MSB - CL inputs, 8LSB - CL outputs
+           w_in          : in std_logic_vector(M-1 downto 0);  -- value
+           w_num         : in std_logic_vector(  4 downto 0);  -- number of weight
+           w_en          : in std_logic;
+           w_lin_rdy     : in std_logic; 
+           w_CL_select   : in std_logic_vector(  2 downto 0); -- number of CL layer
+           w_Grp_select  : in std_logic_vector(  2 downto 0); -- number of Filter Group
 
-           d_out   : out vec(0 to CL_outs -1)(N-1 downto 0); --vec;
-           en_out  : out std_logic);
+           d_out         : out vec(0 to CL_outs -1)(N-1 downto 0); --vec;
+           en_out        : out std_logic;
+           sof_out       : out std_logic);
 end component;
 
 signal   clk         :  std_logic;
@@ -87,6 +88,7 @@ signal   w_num       :  std_logic_vector(  4 downto 0);  -- number of weight
 signal   w_en        :  std_logic;
 signal   w_lin_rdy   :  std_logic; 
 signal   w_CL_select :  std_logic_vector(  2 downto 0);
+signal   w_Grp_select:  std_logic_vector(  2 downto 0);
 signal   d_out       :  vec(0 to CL_outs -1)(N-1 downto 0); --vec;
 signal   en_out      :  std_logic;
 
@@ -110,24 +112,27 @@ process
    begin
 
    --- CL0  
-       gen_layers: for Num in 0 to NumOfLayers-1 loop
-       wait for 10 ns; w_CL_select <= conv_std_logic_vector(Num, w_CL_select'length);
-       gen0_inputs: for k in 0 to CL_outs-1 loop
-          gen_outputs: for j in 0 to CL_outs-1 loop
-             wait for 10 ns;  w_en <= '0'; w_unit_n <= conv_std_logic_vector( j*256+k, w_unit_n'length);
-             gen0_w: for i in 1 to 25 loop
-             --gen_w: for i in 1 to 9 loop
-                 wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( i, w_num'length); w_in <= conv_std_logic_vector(i+j+k+1, w_in'length); 
-             end loop gen0_w;
-          end loop gen_outputs;
-        end loop gen0_inputs;
-
-        if    Num = 0 then
-          init_w_done_0 <= '1';
-        elsif Num = 1 then
-          init_w_done_1 <= '1';
-        end if;
-       end loop gen_layers;
+       gen_grp: for Grp in 0 to NumOfLayers-1 loop
+       wait for 10 ns; w_Grp_select <= conv_std_logic_vector(Grp, w_Grp_select'length);
+          gen_layers: for Num in 0 to NumOfLayers-1 loop
+          wait for 10 ns; w_CL_select <= conv_std_logic_vector(Num, w_CL_select'length);
+          gen0_inputs: for k in 0 to CL_outs-1 loop
+             gen_outputs: for j in 0 to CL_outs-1 loop
+                wait for 10 ns;  w_en <= '0'; w_unit_n <= conv_std_logic_vector( j*256+k, w_unit_n'length);
+                gen0_w: for i in 1 to 25 loop
+                --gen_w: for i in 1 to 9 loop
+                    wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( i, w_num'length); w_in <= conv_std_logic_vector(i+j+k+1, w_in'length); 
+                end loop gen0_w;
+             end loop gen_outputs;
+           end loop gen0_inputs;
+   
+           if    Num = 0 then
+             init_w_done_0 <= '1';
+           elsif Num = 1 then
+             init_w_done_1 <= '1';
+           end if;
+          end loop gen_layers;
+       end loop gen_grp;
 
      wait for 10 ns; init_w_done_0 <= '1';
 
@@ -211,7 +216,6 @@ rst <= '1', '0' after 10 ns;
 
 DUT:  Identity_connection 
   generic map(
-           Pooling       => Pooling       ,
            BP            => BP            , 
            TP            => TP            , 
            poll_criteria => poll_criteria ,
@@ -221,6 +225,7 @@ DUT:  Identity_connection
            stridePool    => stridePool    ,
            CL_inputs     => CL_inputs     ,  
            CL_outs       => CL_outs       ,
+           NumOfGrp      => NumOfGrp      ,
            NumOfLayers   => NumOfLayers   ,
            N             => N             , 
            M             => M             , 
@@ -242,6 +247,7 @@ DUT:  Identity_connection
            w_en          => w_en          ,
            w_lin_rdy     => w_lin_rdy     ,
            w_CL_select   => w_CL_select   ,
+           w_Grp_select  => w_Grp_select  ,
            d_out         => d_out         ,
            en_out        => en_out
            );

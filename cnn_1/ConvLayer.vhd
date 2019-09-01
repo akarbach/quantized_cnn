@@ -14,6 +14,7 @@ entity ConvLayer is
   	       mult_sum      : string := "sum"; --"mult"/"sum";
            Kernel_size   : integer := 5; -- 3/5
            zero_padding  : string := "yes";  --"no"/"yes"
+           stride        : integer := 1;
            CL_inputs     : integer := 1; -- number of inputs features
            CL_outs       : integer := 1; -- number of output features
 
@@ -129,6 +130,7 @@ component ConvLayer_data_gen is
            mult_sum      : string := "sum";           
            Kernel_size   : integer := 3; -- 3/5
            zero_padding  : string := "yes";  --"no"/"yes"
+           stride        : integer := 1;
            N             : integer := 8; -- input data width
      --      M             : integer := 8; -- input weight width
      --      W             : integer := 8; -- output data width      (Note, W+SR <= N+M+4)
@@ -373,7 +375,8 @@ CL_d_g: ConvLayer_data_gen
            BP            => BP          ,
            mult_sum      => mult_sum    ,        
            Kernel_size   => Kernel_size ,
-           zero_padding  => zero_padding,   
+           zero_padding  => zero_padding,  
+           stride        => stride      ,
            N             => N           , 
           -- M          =>M        ,
           -- W          =>W        ,

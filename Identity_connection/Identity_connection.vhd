@@ -165,7 +165,7 @@ begin
 residual_yes: if CL_outs = CL_inputs generate
    gen_shortcut: for i in 0 to CL_inputs-1 generate
    shortcut: fifo 
-   generic map (depth      => NumOfLayers*(Kernel_size+1)/2*in_row, --: integer := 16 ;
+   generic map (depth      => NumOfLayers*(CL_Kernel_size+1)/2*in_row, --: integer := 16 ;
                 burst      => 1,                    --: integer := 10 ;  -- indication for burst read (Note, depth>burst) 
                 Win        => N,                    --: integer := 16 ;
                 Wout       => N)                    --: integer := 64 );  --depth of fifo

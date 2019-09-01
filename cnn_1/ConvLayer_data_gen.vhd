@@ -9,6 +9,7 @@ entity ConvLayer_data_gen is
   	       mult_sum      : string := "sum";     
            Kernel_size   : integer := 3; -- 3/5
            zero_padding  : string := "yes";  --"no"/"yes"
+           stride        : integer := 1;
            N             : integer := 8; -- input data width
       --     M             : integer := 8; -- input weight width
       --     W             : integer := 8; -- output data width      (Note, W+SR <= N+M+4)
@@ -126,7 +127,13 @@ signal line_last   ,line_b4l   : std_logic;
 signal pixel_first ,pixel_2nd  : std_logic;
 signal pixel_last  ,pixel_b4l  : std_logic;
 
-signal zero_padding_en : std_logic;
+signal zero_padding_en     : std_logic;
+signal stride_row_count    : integer range 0 to 1023;
+signal stride_col_count    : integer range 0 to 1023;
+signal stride_row_en       : std_logic;
+signal stride_col_en       : std_logic;
+
+signal stride_total_en     : std_logic;
 
 --signal en2conv     : std_logic_vector(1 downto 0);
 --signal en_count    : std_logic_vector(1 downto 0);
@@ -206,7 +213,7 @@ gen_no_BP: if BP = "no" generate
 
     elsif rising_edge(clk) then
        if en_in = '1' then
-          en_in1(EN_BIT)  <= en_in;
+          en_in1(EN_BIT)  <= stride_total_en; --en_in;
           en_in1(SOF_BIT) <= sof_in;
           en_in2  <= en_in1;
           en_in3  <= en_in2;
@@ -377,11 +384,12 @@ data2firstlast_pxl <= firstlast_3 when Kernel_size = 3 else firstlast_5;
     if rst = '1' then
         row_num   <= 0;
         col_num   <= 0;
-        --en_count  <= (others => '0');
         start_pixel_count <=  0 ;
         start_pixel_done  <= '0';
-        --start_sof_count   <=  0 ;
-        --start_sof_done    <= '0';
+        stride_row_count  <=  stride ;
+        stride_col_count  <=  stride ;
+        stride_row_en     <= '0';
+        stride_col_en     <= '0';
     elsif rising_edge(clk) then
        if en_in = '1' then
           --if en_mid1(SOF_BIT) = '1' then
@@ -390,33 +398,54 @@ data2firstlast_pxl <= firstlast_3 when Kernel_size = 3 else firstlast_5;
           --   --en_count  <= '1';
           --else
              --en_count(EN_BIT)   <= '0';
-             if col_num =  in_col -1 then
-                col_num <= 0;
-                if row_num = in_row - 1 then
-                   row_num   <= 0;
-                   --start_sof_done <= '1';
-                else
-                   row_num <= row_num + 1;
-                   --start_sof_done <= '0';
-                end if;
+
+
+          if col_num =  in_col -1 then
+             col_num <= 0;
+             stride_row_count  <=  stride ;
+             stride_row_en     <= '0';
+             stride_col_count  <=  stride ;
+             stride_col_en     <= '0';
+             if row_num = in_row - 1 then
+                row_num   <= 0;
+                stride_row_count  <=  stride ;
+                stride_row_en     <= '0';
+                --start_sof_done <= '1';
              else
-                col_num <= col_num + 1;
+                row_num <= row_num + 1;
+                if stride_row_count = stride then
+                   stride_row_count  <=  1 ;
+                   stride_row_en     <= '1';
+                else
+                   stride_row_count <= stride_row_count + 1;
+                   stride_row_en     <= '0';
+                end if;
              end if;
+          else
+             col_num <= col_num + 1;
+             if stride_col_count = stride then
+                stride_col_count  <=  1 ;
+                stride_col_en     <= '1';
+             else
+                stride_col_count <= stride_col_count + 1;
+                stride_col_en     <= '0';
+             end if;
+          end if;
           --end if;
           if start_pixel_done = '0' then
              start_pixel_count <= start_pixel_count + 1;
              --if start_pixel_count = in_col + 1  then
            --if start_pixel_count = (Kernel_size-1)/2*in_col + 1  then
 
-           if Kernel_size = 3 then
-             if start_pixel_count = in_col + 1 then
-                start_pixel_done <= '1';
+             if Kernel_size = 3 then
+               if start_pixel_count = in_col + 1 then
+                  start_pixel_done <= '1';
+               end if;
+             else -- Kernel_size = 5
+               if start_pixel_count = 2*in_col + 2 then
+                  start_pixel_done <= '1';
+               end if;
              end if;
-           else -- Kernel_size = 5
-             if start_pixel_count = 2*in_col + 2 then
-                start_pixel_done <= '1';
-             end if;
-           end if;
           end if;
 
         --  if row_num  = 0 and col_num   = 0 then
@@ -441,13 +470,26 @@ data2firstlast_pxl <= firstlast_3 when Kernel_size = 3 else firstlast_5;
         --  end if;
 
        else
-          --start_sof_done <= '0';
+          stride_row_en     <= '0';
+          stride_col_en     <= '0';
        end if;
        --en_count(EN_BIT)  <= en_in; -- and start_pixel_done;
        --en_count(SOF_BIT) <= start_sof_done ; --en_end3(SOF_BIT);
     end if;
   end process conv_ctr;
 start_sof_done <= '1' when row_num  = 0 and col_num   = 0 else '0';
+
+--p_stride: process (stride_row_en, stride_col_en)
+--  begin
+--     if stride = 1  then
+--        stride_total_en <= '1'; 
+--     else
+--        stride_total_en <= stride_row_en and stride_col_en;
+--     end if;
+--
+--  end process p_stride; 
+stride_total_en <= '1' when stride = 1 else (stride_row_en and stride_col_en);
+
 
  conv_ctr2 : process (row_num, col_num)
   begin
@@ -657,7 +699,7 @@ zero_padding_en <= '1'  when zero_padding = "yes" else
           data2conv1 <= d_end3; 
        end if;
        data2conv5 <= d_mid2 ;
-       en_out     <= en_in and start_pixel_done and zero_padding_en;
+       en_out     <= en_in and start_pixel_done and zero_padding_en and en_mid2(EN_BIT);
        if start_pixel_done = '1' then
           sof_out    <= firstlast_mid2(PIX_SOF);
        else
@@ -766,7 +808,7 @@ d2c_kernel5: if Kernel_size = 5 generate
        if firstlast_end3(LIN_LST)='1' or firstlast_end3(LIN_B4L)='1' or firstlast_end3(PIX_LST)='1'                                then data2conv24<= (others => '0'); else data2conv24<= d_in2   ; end if;
        if firstlast_end3(LIN_LST)='1' or firstlast_end3(LIN_B4L)='1' or firstlast_end3(PIX_LST)='1' or firstlast_end3(PIX_B4L)='1' then data2conv25<= (others => '0'); else data2conv25<= d_in1   ; end if;
 
-       en_out     <= en_in and start_pixel_done and zero_padding_en;
+       en_out     <= en_in and start_pixel_done and zero_padding_en and en_mid2(EN_BIT);
        if start_pixel_done = '1' then
           sof_out    <= firstlast_end3(PIX_SOF);
        else

@@ -178,7 +178,7 @@ begin
    end generate gen_exten;
 
 
--- Frame accomulator
+-- Frame accumulator
   p_acc : process (clk,rst)
   begin
     if rst = '1' then

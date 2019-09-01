@@ -13,7 +13,8 @@ entity ConvLayer_tb is
            mult_sum      : string := "mult"; --"sum"/"mult";
            Kernel_size   : integer := 3; -- 3/5
            zero_padding  : string := "yes";  --"no"/"yes"
-           CL_inputs     : integer := 3; -- number of inputs features
+           stride        : integer := 2;
+           CL_inputs     : integer := 1; -- number of inputs features
            CL_outs       : integer := 2; -- number of output features
            all_width     : integer := 8;
            N             : integer := all_width; -- input data width
@@ -21,8 +22,8 @@ entity ConvLayer_tb is
            W             : integer := all_width; -- output data width      (Note, W+SR <= N+M+4)
            SR            : integer := 4; -- data shift right before output
            --bpp           : integer := 8; -- bit per pixel
-           in_row        : integer := 7;
-           in_col        : integer := 8
+           in_row        : integer := 4;
+           in_col        : integer := 4
            );
 end entity ConvLayer_tb;
 
@@ -36,6 +37,7 @@ component ConvLayer is
            mult_sum      : string := "sum";
            Kernel_size   : integer := 3; -- 3/5
            zero_padding  : string := "yes";  --"no"/"yes"
+           stride        : integer := 1;
            CL_inputs     : integer := 14; -- number of inputs features
            CL_outs       : integer := 4; -- number of output features
            N             : integer := 8; -- input data width
@@ -59,7 +61,7 @@ component ConvLayer is
            w_num   : in std_logic_vector(  4 downto 0);
            w_en    : in std_logic;
 
-           d_out   : out std_logic_vector (W-1 downto 0);
+           d_out   : out vec(0 to CL_outs -1)(W-1 downto 0);
            en_out  : out std_logic;
            sof_out : out std_logic);
 end component;
@@ -78,7 +80,7 @@ signal w_num   : std_logic_vector(  4 downto 0);
 signal w_en    : std_logic;
 --signal w_en    : std_logic_vector(  9 downto 0);
 
-signal d_out   : std_logic_vector (W-1 downto 0);
+signal d_out   : vec(0 to CL_outs -1)(W-1 downto 0);
 signal en_out  : std_logic;
 signal sof_out : std_logic; -- start of frame
 
@@ -98,6 +100,7 @@ DUT: ConvLayer generic map (
       mult_sum => mult_sum,
       Kernel_size   => Kernel_size ,
       zero_padding  => zero_padding,
+      stride        => stride      ,
       CL_inputs     => CL_inputs   ,
       CL_outs       => CL_outs     ,
       N        => N       , -- input data width
@@ -242,6 +245,9 @@ begin
     gen_d_in: for I in 0 to CL_inputs-1 loop
        d_in(I) <= conv_std_logic_vector( 13 + 3*I, W);
     end loop gen_d_in;
+
+
+
     wait until rising_edge(clk); 
     wait until rising_edge(clk); 
     wait until rising_edge(clk); 
@@ -250,26 +256,36 @@ begin
     wait until rising_edge(clk); 
     wait until rising_edge(clk); 
     wait until rising_edge(clk); 
-  while true loop
+  --while true loop
     sof_in <= '1';
-    for i in 0 to 10 loop
+    --for i in 0 to 10 loop
       enreg <= enreg(enreg'left - 1 downto 0) & enreg(enreg'left);
       --en_in <= enreg(enreg'left); --'1';  
-      en_in <= '1';
+
   --    w_in   <= w_in + 1;
   --    w_num   <= w_num + 1;
   --    w_en    <= '1';
-    --  d_in <= d_in(d_in'left - 1 downto 0) & (d_in(d_in'left) xor d_in(d_in'left - 1));    
-      gen2_d_in: for I in 0 to CL_inputs-1 loop
-        d_in(I) <= d_in(I)(W-2 downto 0) & (d_in(I)(W-1) xor d_in(I)(W - 2));
-      end loop gen2_d_in;
-      wait until rising_edge(clk);
-      sof_in <= '0';
-    end loop;
-  end loop;
+    --  d_in <= d_in(d_in'left - 1 downto 0) & (d_in(d_in'left) xor d_in(d_in'left - 1));  
+    several_f : for k in 0 to 4 loop
+       data_fr: for k in 0 to in_row-1 loop
+          data_cl: for j in 0 to in_col -1 loop  
+             en_in <= '1';
+             gen2_d_in: for I in 0 to CL_inputs-1 loop
+               d_in(I) <= d_in(I)(W-2 downto 0) & (d_in(I)(W-1) xor d_in(I)(W - 2));
+             end loop gen2_d_in;
+             wait until rising_edge(clk);
+          end loop data_cl;
+          en_in <= '0';
+          sof_in <= '0';
+       end loop data_fr;
+
+       wait_loop: for w in 0 to 40 loop
+          wait until rising_edge(clk);
+       end loop wait_loop;
+    end loop several_f;
+  --  end loop;
+  --end loop;
 end process;
-
-
 
 --process        
 --   begin   
