@@ -15,8 +15,8 @@ entity ConvLayer is
            Kernel_size   : integer := 5; -- 3/5
            zero_padding  : string := "yes";  --"no"/"yes"
            stride        : integer := 1;
-           CL_inputs     : integer := 1; -- number of inputs features
-           CL_outs       : integer := 1; -- number of output features
+           CL_inputs     : integer := 3; -- number of inputs features
+           CL_outs       : integer := 4; -- number of output features
 
            --CL_outs      : integer := 3; -- number of CL units
            N             : integer := 8; --W; -- input data width
@@ -234,7 +234,7 @@ component multi_adder is
   port    (
            clk         : in std_logic;
            rst         : in std_logic;
-           d_in        : in mat(0 to CL_inputs-1)(0 to CL_outs -1)(N-1 downto 0);
+           d_in        : in vec(0 to CL_inputs*CL_outs -1)(N-1 downto 0);
 
            en_in       : in std_logic;
            sof_in      : in std_logic; -- start of frame
@@ -244,43 +244,34 @@ component multi_adder is
            sof_out     : out std_logic);
 end component;
 
-type t_w_vec is array (0 to CL_outs-1) of std_logic_vector(M-1 downto 0);
-type t_weight is array (0 to CL_inputs-1) of t_w_vec;
-signal w1         : t_weight;
-signal w2         : t_weight;
-signal w3         : t_weight;
-signal w4         : t_weight;
-signal w5         : t_weight;
-signal w6         : t_weight;
-signal w7         : t_weight;
-signal w8         : t_weight;
-signal w9         : t_weight;
-signal w10        : t_weight;         
-signal w11        : t_weight;         
-signal w12        : t_weight;         
-signal w13        : t_weight;         
-signal w14        : t_weight;         
-signal w15        : t_weight;         
-signal w16        : t_weight;         
-signal w17        : t_weight;         
-signal w18        : t_weight;         
-signal w19        : t_weight;         
-signal w20        : t_weight;         
-signal w21        : t_weight;         
-signal w22        : t_weight;         
-signal w23        : t_weight;         
-signal w24        : t_weight;         
-signal w25        : t_weight;         
 
---signal w1         : std_logic_vector(M-1 downto 0); -- weight matrix
---signal w2         : std_logic_vector(M-1 downto 0); -- weight matrix
---signal w3         : std_logic_vector(M-1 downto 0); -- weight matrix
---signal w4         : std_logic_vector(M-1 downto 0); -- weight matrix
---signal w5         : std_logic_vector(M-1 downto 0); -- weight matrix
---signal w6         : std_logic_vector(M-1 downto 0); -- weight matrix
---signal w7         : std_logic_vector(M-1 downto 0); -- weight matrix
---signal w8         : std_logic_vector(M-1 downto 0); -- weight matrix
---signal w9         : std_logic_vector(M-1 downto 0); -- weight matrix
+signal w1         : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
+signal w2         : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
+signal w3         : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
+signal w4         : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
+signal w5         : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
+signal w6         : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
+signal w7         : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
+signal w8         : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
+signal w9         : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
+signal w10        : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
+signal w11        : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
+signal w12        : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
+signal w13        : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
+signal w14        : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
+signal w15        : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
+signal w16        : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
+signal w17        : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
+signal w18        : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
+signal w19        : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
+signal w20        : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
+signal w21        : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
+signal w22        : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
+signal w23        : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
+signal w24        : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
+signal w25        : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
+
+
 
 type t_data2conv is array (0 to CL_inputs-1) of std_logic_vector(N-1 downto 0);
 signal data2conv1  : t_data2conv;                                   --std_logic_vector (N-1 downto 0);
@@ -322,7 +313,7 @@ signal w_unit_output  : integer;
 type d_out_vec is array (natural range 0 to CL_outs -1) of std_logic_vector(W-1 downto 0); --element;
 type d_out_mat is array (natural range 0 to (CL_inputs -1)) of d_out_vec;
 --signal d_out1     : d_out_mat;                                      --vec;
-signal d_out1     : mat(0 to CL_inputs-1)(0 to CL_outs -1)(N + M +4  downto 0);                                      --vec;
+signal d_out1     : vec(0 to CL_inputs*CL_outs -1)(N + M +4  downto 0);                                      --vec;
 
 signal d_sums     : vec(0 to CL_outs -1)(W-1 downto 0);
 signal w_unit_en  : vec(0 to CL_inputs -1)(CL_outs-1 downto 0);
@@ -435,34 +426,34 @@ CL_w_g:  ConvLayer_weight_gen
            w_num      => w_num_s   ,
            w_en       => w_unit_en(j)(i)     , --(i)   ,
 
-           w1         => w1 (J)(i)    ,
-           w2         => w2 (J)(i)    ,
-           w3         => w3 (J)(i)    ,
-           w4         => w4 (J)(i)    ,
-           w5         => w5 (J)(i)    ,
-           w6         => w6 (J)(i)    ,
-           w7         => w7 (J)(i)    ,
-           w8         => w8 (J)(i)    ,
-           w9         => w9 (J)(i)    ,
-           w10        => w10(J)(i)    ,  
-           w11        => w11(J)(i)    ,  
-           w12        => w12(J)(i)    ,  
-           w13        => w13(J)(i)    ,  
-           w14        => w14(J)(i)    ,  
-           w15        => w15(J)(i)    ,  
-           w16        => w16(J)(i)    ,  
-           w17        => w17(J)(i)    ,  
-           w18        => w18(J)(i)    ,  
-           w19        => w19(J)(i)    ,  
-           w20        => w20(J)(i)    ,  
-           w21        => w21(J)(i)    ,  
-           w22        => w22(J)(i)    ,  
-           w23        => w23(J)(i)    ,  
-           w24        => w24(J)(i)    ,  
-           w25        => w25(J)(i)      
+           w1         => w1 (J*CL_outs + i) ,
+           w2         => w2 (J*CL_outs + i) ,
+           w3         => w3 (J*CL_outs + i) ,
+           w4         => w4 (J*CL_outs + i) ,
+           w5         => w5 (J*CL_outs + i) ,
+           w6         => w6 (J*CL_outs + i) ,
+           w7         => w7 (J*CL_outs + i) ,
+           w8         => w8 (J*CL_outs + i) ,
+           w9         => w9 (J*CL_outs + i) ,
+           w10        => w10(J*CL_outs + i) ,  
+           w11        => w11(J*CL_outs + i) ,  
+           w12        => w12(J*CL_outs + i) ,  
+           w13        => w13(J*CL_outs + i) ,  
+           w14        => w14(J*CL_outs + i) ,  
+           w15        => w15(J*CL_outs + i) ,  
+           w16        => w16(J*CL_outs + i) ,  
+           w17        => w17(J*CL_outs + i) ,  
+           w18        => w18(J*CL_outs + i) ,  
+           w19        => w19(J*CL_outs + i) ,  
+           w20        => w20(J*CL_outs + i) ,  
+           w21        => w21(J*CL_outs + i) ,  
+           w22        => w22(J*CL_outs + i) ,  
+           w23        => w23(J*CL_outs + i) ,  
+           w24        => w24(J*CL_outs + i) ,  
+           w25        => w25(J*CL_outs + i)   
          );
 
---gen_CL: for I in 0 to CL_outs-1 generate
+
  CL_c:  ConvLayer_calc
   generic map (
           -- Relu       => Relu       ,
@@ -506,33 +497,33 @@ CL_w_g:  ConvLayer_weight_gen
            en_in      => en_s(0)        ,
            sof_in     => sof_s(0)       ,
 
-           w1         => w1 (J)(i)     ,
-           w2         => w2 (J)(i)     ,
-           w3         => w3 (J)(i)     ,
-           w4         => w4 (J)(i)     ,
-           w5         => w5 (J)(i)     ,
-           w6         => w6 (J)(i)     ,
-           w7         => w7 (J)(i)     ,
-           w8         => w8 (J)(i)     ,
-           w9         => w9 (J)(i)     ,
-           w10        => w10(J)(i)     ,  
-           w11        => w11(J)(i)     ,  
-           w12        => w12(J)(i)     ,  
-           w13        => w13(J)(i)     ,  
-           w14        => w14(J)(i)     ,  
-           w15        => w15(J)(i)     ,  
-           w16        => w16(J)(i)     ,  
-           w17        => w17(J)(i)     ,  
-           w18        => w18(J)(i)     ,  
-           w19        => w19(J)(i)     ,  
-           w20        => w20(J)(i)     ,  
-           w21        => w21(J)(i)     ,  
-           w22        => w22(J)(i)     ,  
-           w23        => w23(J)(i)     ,  
-           w24        => w24(J)(i)     ,  
-           w25        => w25(J)(i)     ,
+           w1         => w1 (j*CL_outs + i)     ,
+           w2         => w2 (j*CL_outs + i)     ,
+           w3         => w3 (j*CL_outs + i)     ,
+           w4         => w4 (j*CL_outs + i)     ,
+           w5         => w5 (j*CL_outs + i)     ,
+           w6         => w6 (j*CL_outs + i)     ,
+           w7         => w7 (j*CL_outs + i)     ,
+           w8         => w8 (j*CL_outs + i)     ,
+           w9         => w9 (j*CL_outs + i)     ,
+           w10        => w10(j*CL_outs + i)     ,  
+           w11        => w11(j*CL_outs + i)     ,  
+           w12        => w12(j*CL_outs + i)     ,  
+           w13        => w13(j*CL_outs + i)     ,  
+           w14        => w14(j*CL_outs + i)     ,  
+           w15        => w15(j*CL_outs + i)     ,  
+           w16        => w16(j*CL_outs + i)     ,  
+           w17        => w17(j*CL_outs + i)     ,  
+           w18        => w18(j*CL_outs + i)     ,  
+           w19        => w19(j*CL_outs + i)     ,  
+           w20        => w20(j*CL_outs + i)     ,  
+           w21        => w21(j*CL_outs + i)     ,  
+           w22        => w22(j*CL_outs + i)     ,  
+           w23        => w23(j*CL_outs + i)     ,  
+           w24        => w24(j*CL_outs + i)     ,  
+           w25        => w25(j*CL_outs + i)     ,
 
-           d_out      => d_out1  (J)(i) ,
+           d_out      => d_out1  (j*CL_outs + i) ,
            en_out     => en_out1 (J)(i) ,
            sof_out    => sof_out1(J)(i)
          );
@@ -566,28 +557,6 @@ adder: multi_adder
            en_out      => en_sums       ,
            sof_out     => sof_sums
            );
-
---  p_out : process (clk,rst)
---  begin
---    if rst = '1' then
---       countI     <= (others => '0');
---       countJ     <= (others => '0');
---    elsif rising_edge(clk) then
---       d_out <= d_sums(conv_integer('0' & countJ));
---       if countI = CL_outs - 1 then
---          countI <= (others => '0');
---          if countJ = CL_inputs - 1 then
---             countJ <= (others => '0');
---          else
---             countJ <= countJ + countJ;
---          end if;
---       else
---          countI <= countI + 1;
---       end if;
---       en_out  <= en_sums ;
---       sof_out <= sof_sums;
---    end if;
---  end process p_out;
 
 d_out <= d_sums;
 en_out  <= en_sums ;

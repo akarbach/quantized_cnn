@@ -13,9 +13,9 @@ entity ConvLayer_tb is
            mult_sum      : string := "mult"; --"sum"/"mult";
            Kernel_size   : integer := 3; -- 3/5
            zero_padding  : string := "yes";  --"no"/"yes"
-           stride        : integer := 2;
-           CL_inputs     : integer := 1; -- number of inputs features
-           CL_outs       : integer := 2; -- number of output features
+           stride        : integer := 1;
+           CL_inputs     : integer := 70; -- number of inputs features
+           CL_outs       : integer := 3; -- number of output features
            all_width     : integer := 8;
            N             : integer := all_width; -- input data width
            M             : integer := 5; -- input weight width
@@ -204,7 +204,7 @@ process
           wait for 10 ns;  w_en <= '0'; w_unit_n <= conv_std_logic_vector( j*256+k, w_unit_n'length);
           --gen_w: for i in 1 to 25 loop
           gen_w: for i in 1 to 9 loop
-              wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( i, w_num'length); w_in <= conv_std_logic_vector(i+j+k+1, w_in'length); 
+              wait for 10 ns; w_en <= '1'; w_num <= conv_std_logic_vector( i, w_num'length); w_in <= conv_std_logic_vector(i+j+10*k+1, w_in'length); 
           end loop gen_w;
        end loop gen_outputs;
     end loop gen_inputs;
