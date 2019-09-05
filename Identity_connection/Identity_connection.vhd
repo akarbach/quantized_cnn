@@ -40,7 +40,6 @@ entity Identity_connection is
            w_in        : in std_logic_vector(M-1 downto 0);  -- value
            w_num       : in std_logic_vector(  4 downto 0);  -- number of weight
            w_en        : in std_logic;
-           w_lin_rdy   : in std_logic; 
            w_CL_select : in std_logic_vector(  2 downto 0); -- number of CL layer
 
            d_out   : out vec(0 to CL_outs -1)(N-1 downto 0); --vec;
@@ -138,8 +137,7 @@ signal  w_unit_n_s : std_logic_vector( 15 downto 0);  -- address weight generato
 signal  w_in_s     : std_logic_vector(M-1 downto 0);  -- value
 signal  w_num_s    : std_logic_vector(  4 downto 0);  -- number of weight
 signal  w_en_s     : std_logic_vector(  7 downto 0); 
-signal  d_in1      : mat(0 to NumOfLayers)(0 to CL_outs -1)(N-1  downto 0);    
---signal  d_in1      : vec(0 to NumOfLayers*CL_inputs -1)(N-1  downto 0);    
+signal  d_in1      : vec(0 to NumOfLayers*CL_outs -1)(N-1  downto 0);    
 
 signal  en_in1     : std_logic_vector(NumOfLayers downto 0);  
 signal  sof_in1    : std_logic_vector(NumOfLayers downto 0);
@@ -217,46 +215,47 @@ CL_first: ConvLayer
            w_in          => w_in_s        ,
            w_num         => w_num_s       ,
            w_en          => w_en_s(0)     ,
-           d_out         => d_in1(1)      ,
+           d_out         => d_in1(0 to CL_outs-1),
            en_out        => en_in1(1)     ,
            sof_out       => sof_in1(1))   ;
 
 
 gen_CL: for i in 1 to NumOfLayers-2 generate
-CLi: ConvLayer 
-  generic map (
-           Relu          => "yes"         ,
-           BP            => BP            ,
-           TP            => TP            ,
-           mult_sum      => mult_sum      ,
-           Kernel_size   => CL_Kernel_size,
-           zero_padding  => zero_padding  ,
-           stride        => strideCL      ,
-           CL_inputs     => CL_outs       ,
-           CL_outs       => CL_outs       ,
-           N             => N             ,
-           M             => M             ,
-           W             => W             ,
-           SR            => SR_cl(i)      ,
-           in_row        => in_row        ,
-           in_col        => in_col
-           )
-  port map   (
-           clk           => clk           ,
-           rst           => rst           , 
-           d_in          => d_in1(i)      ,
-           en_in         => en_in1(i)     ,
-           sof_in        => sof_in1(i)    ,
-           w_unit_n      => w_unit_n_s    ,
-           w_in          => w_in_s        ,
-           w_num         => w_num_s       ,
-           w_en          => w_en_s(i)     ,
-           d_out         => d_in1(i+1)    ,
-           en_out        => en_in1(i+1)   ,
-           sof_out       => sof_in1(i+1));
+   CLi: ConvLayer 
+     generic map (
+              Relu          => "yes"         ,
+              BP            => BP            ,
+              TP            => TP            ,
+              mult_sum      => mult_sum      ,
+              Kernel_size   => CL_Kernel_size,
+              zero_padding  => zero_padding  ,
+              stride        => strideCL      ,
+              CL_inputs     => CL_outs       ,
+              CL_outs       => CL_outs       ,
+              N             => N             ,
+              M             => M             ,
+              W             => W             ,
+              SR            => SR_cl(i)      ,
+              in_row        => in_row        ,
+              in_col        => in_col
+              )
+     port map   (
+              clk           => clk           ,
+              rst           => rst           , 
+              d_in          => d_in1((i-1)*CL_outs to (i)*CL_outs-1),
+              en_in         => en_in1(i)     ,
+              sof_in        => sof_in1(i)    ,
+              w_unit_n      => w_unit_n_s    ,
+              w_in          => w_in_s        ,
+              w_num         => w_num_s       ,
+              w_en          => w_en_s(i)     ,
+              d_out         => d_in1((i)*CL_outs to (i+1)*CL_outs-1),
+              en_out        => en_in1(i+1)   ,
+              sof_out       => sof_in1(i+1));
 end generate gen_CL;
 
-CL_last: ConvLayer 
+
+CL_last_new: ConvLayer 
   generic map (
            Relu          => "no"                  ,
            BP            => BP                    ,
@@ -277,14 +276,14 @@ CL_last: ConvLayer
   port map   (
            clk           => clk                   ,
            rst           => rst                   , 
-           d_in          => d_in1  (NumOfLayers-1),
+           d_in          => d_in1 ((NumOfLayers-2)*CL_outs to (NumOfLayers-1)*CL_outs-1),
            en_in         => en_in1 (NumOfLayers-1),
            sof_in        => sof_in1(NumOfLayers-1),
            w_unit_n      => w_unit_n_s            ,
            w_in          => w_in_s                ,
            w_num         => w_num_s               ,
-           w_en          => w_en_s(NumOfLayers-1)   ,
-           d_out         => d_in1(NumOfLayers)    ,
+           w_en          => w_en_s (NumOfLayers-1),
+           d_out         => d_in1((NumOfLayers-1)*CL_outs to NumOfLayers*CL_outs-1),
            en_out        => en_in1(NumOfLayers)   ,
            sof_out       => sof_in1(NumOfLayers)) ;
 
@@ -302,7 +301,7 @@ end process p_sample_CLs;
 p_sample_CLs2 : process(Clk,rst)
 begin
   if(rising_edge(Clk)) then
-     d_s   <= d_in1  (NumOfLayers);
+     d_s   <= d_in1  ((NumOfLayers-1)*CL_outs to NumOfLayers*CL_outs-1);
   end if; 
 end process p_sample_CLs2;
 

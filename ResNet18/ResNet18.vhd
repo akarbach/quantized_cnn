@@ -126,7 +126,6 @@ component Identity_connection_group is
            w_in          : in std_logic_vector(M-1 downto 0);  -- value
            w_num         : in std_logic_vector(  4 downto 0);  -- number of weight
            w_en          : in std_logic;
-           w_lin_rdy     : in std_logic; 
            w_CL_select   : in std_logic_vector(  2 downto 0); -- number of CL layer
            w_Grp_select  : in std_logic_vector(  2 downto 0); -- number of Filter Group
 
@@ -308,7 +307,6 @@ CL2: Identity_connection_group
            w_in        => w_in_s         ,
            w_num       => w_num_s(4 downto 0),
            w_en        => w_en_s(2)      ,
-           w_lin_rdy   => w_lin_rdy_s    , 
            w_CL_select => w_CL_select_s  ,
            w_Grp_select=> w_Grp_select_s ,
            d_out       => d_out_2        ,
@@ -354,7 +352,6 @@ CL3: Identity_connection_group
            w_in        => w_in_s         ,
            w_num       => w_num_s(4 downto 0),
            w_en        => w_en_s(3)      ,
-           w_lin_rdy   => w_lin_rdy_s    , 
            w_CL_select => w_CL_select_s  ,
            w_Grp_select=> w_Grp_select_s ,
            d_out       => d_out_3        ,
@@ -399,7 +396,6 @@ CL4: Identity_connection_group
            w_in        => w_in_s         ,
            w_num       => w_num_s(4 downto 0),
            w_en        => w_en_s(4)      ,
-           w_lin_rdy   => w_lin_rdy_s    , 
            w_CL_select => w_CL_select_s  ,
            w_Grp_select=> w_Grp_select_s ,
            d_out       => d_out_4        ,
@@ -443,7 +439,6 @@ CL5: Identity_connection_group
            w_in        => w_in_s         ,
            w_num       => w_num_s(4 downto 0),
            w_en        => w_en_s(5)      ,
-           w_lin_rdy   => w_lin_rdy_s    , 
            w_CL_select => w_CL_select_s  ,
            w_Grp_select=> w_Grp_select_s ,
            d_out       => d_out_5        ,

@@ -69,7 +69,6 @@ component Identity_connection is
            w_in        : in std_logic_vector(M-1 downto 0);  -- value
            w_num       : in std_logic_vector(  4 downto 0);  -- number of weight
            w_en        : in std_logic;
-           w_lin_rdy   : in std_logic; 
            w_CL_select : in std_logic_vector(  2 downto 0);
 
            d_out   : out vec(0 to CL_outs -1)(N-1 downto 0); --vec;
@@ -85,7 +84,6 @@ signal   w_unit_n    :  std_logic_vector( 15 downto 0);  -- address weight gener
 signal   w_in        :  std_logic_vector(M-1 downto 0);  -- value
 signal   w_num       :  std_logic_vector(  4 downto 0);  -- number of weight
 signal   w_en        :  std_logic;
-signal   w_lin_rdy   :  std_logic; 
 signal   w_CL_select :  std_logic_vector(  2 downto 0);
 signal   d_out       :  vec(0 to CL_outs -1)(N-1 downto 0); --vec;
 signal   en_out      :  std_logic;
@@ -239,8 +237,7 @@ DUT:  Identity_connection
            w_unit_n      => w_unit_n      ,
            w_in          => w_in          ,
            w_num         => w_num         ,
-           w_en          => w_en          ,
-           w_lin_rdy     => w_lin_rdy     ,
+           w_en          => w_en          ,`
            w_CL_select   => w_CL_select   ,
            d_out         => d_out         ,
            en_out        => en_out

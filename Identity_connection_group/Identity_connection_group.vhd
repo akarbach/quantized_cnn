@@ -18,7 +18,7 @@ entity Identity_connection_group is
            stridePool    : integer :=  2; -- stride of the pooling stage, stride of CL is 1
            CL_inputs     : integer := 2; -- number of inputs features of the first CL
            CL_outs       : integer := 3; -- number of output features of the first CL and all features of the next CLs
-           NumOfGrp      : integer := 2; --1..8 -- number of Filter Groups (Identity_connection)
+           NumOfGrp      : integer := 4; --1..8 -- number of Filter Groups (Identity_connection)
            NumOfLayers   : integer := 2; --1..8 -- number of CL layers in each Filter Group
 
            N             : integer := 8; --W; -- input data width
@@ -41,7 +41,6 @@ entity Identity_connection_group is
            w_in          : in std_logic_vector(M-1 downto 0);  -- value
            w_num         : in std_logic_vector(  4 downto 0);  -- number of weight
            w_en          : in std_logic;
-           w_lin_rdy     : in std_logic; 
            w_CL_select   : in std_logic_vector(  2 downto 0); -- number of CL layer
            w_Grp_select  : in std_logic_vector(  2 downto 0); -- number of Filter Group
 
@@ -86,7 +85,6 @@ component Identity_connection is
            w_in        : in std_logic_vector(M-1 downto 0);  -- value
            w_num       : in std_logic_vector(  4 downto 0);  -- number of weight
            w_en        : in std_logic;
-           w_lin_rdy   : in std_logic; 
            w_CL_select : in std_logic_vector(  2 downto 0); -- number of CL layer
 
            d_out   : out vec(0 to CL_outs -1)(N-1 downto 0); --vec;
@@ -96,7 +94,7 @@ end component;
 
 signal  en_in1     : std_logic_vector(NumOfGrp downto 0);  
 signal  sof_in1    : std_logic_vector(NumOfGrp downto 0);
-signal  d_in1      : mat(0 to NumOfGrp)(0 to CL_outs -1)(N-1  downto 0);  
+signal  d_in1      : vec(0 to NumOfGrp * CL_outs -1)(N-1  downto 0);  
 
 signal  w_unit_n_s : std_logic_vector  ( 15 downto 0);  -- address weight generators,  8MSB - CL inputs, 8LSB - CL outputs
 signal  w_in_s     : std_logic_vector(M-1 downto 0);  -- value
@@ -136,10 +134,9 @@ Grp_first: Identity_connection
            w_in          => w_in_s        ,
            w_num         => w_num_s       ,
            w_en          => w_en_s(0)     ,
-           w_lin_rdy     => w_lin_rdy     ,
            w_CL_select   => w_CL_select   ,
 
-           d_out         => d_in1(0)      ,
+           d_out         => d_in1(0 to CL_outs-1),
            en_out        => en_in1(0)     ,
            sof_out       => sof_in1(0)    );
 
@@ -169,17 +166,16 @@ Grp_i: Identity_connection
   port map   (
            clk           => clk           ,
            rst           => rst           , 
-           d_in          => d_in1  (i-1)  ,
+           d_in          => d_in1  ((i-1)*CL_outs to (i)*CL_outs-1), --(i-1)  ,
            en_in         => en_in1 (i-1)  ,
            sof_in        => sof_in1(i-1)  ,
            w_unit_n      => w_unit_n_s    ,
            w_in          => w_in_s        ,
            w_num         => w_num_s       ,
            w_en          => w_en_s(i)     ,
-           w_lin_rdy     => w_lin_rdy     ,
            w_CL_select   => w_CL_select   ,
 
-           d_out         => d_in1  (i)    ,
+           d_out         => d_in1  ((i)*CL_outs to (i+1)*CL_outs-1), --(i)    ,
            en_out        => en_in1 (i)    ,
            sof_out       => sof_in1(i)    );
 end generate gen_grp;
@@ -208,21 +204,20 @@ Grp_last: Identity_connection
   port map   (
            clk           => clk                 ,
            rst           => rst                 , 
-           d_in          => d_in1(NumOfGrp-2)   ,
+           d_in          => d_in1((NumOfGrp-2)*CL_outs to (NumOfGrp-1)*CL_outs-1), --(NumOfGrp-2)   ,
            en_in         => en_in1(NumOfGrp-2)  ,
            sof_in        => sof_in1(NumOfGrp-2) ,
            w_unit_n      => w_unit_n_s          ,
            w_in          => w_in_s              ,
            w_num         => w_num_s             ,
            w_en          => w_en_s(NumOfGrp-1)  ,
-           w_lin_rdy     => w_lin_rdy           ,
            w_CL_select   => w_CL_select         ,
 
-           d_out         => d_in1(NumOfGrp-1)     ,
+           d_out         => d_in1((NumOfGrp-1)*CL_outs to NumOfGrp*CL_outs-1), --(NumOfGrp-1)     ,
            en_out        => en_in1(NumOfGrp-1)    ,
            sof_out       => sof_in1(NumOfGrp-1)   );
 
-   d_out   <= d_in1  (NumOfGrp-1);
+   d_out   <= d_in1  ((NumOfGrp-1)*CL_outs to NumOfGrp*CL_outs-1);
    en_out  <= en_in1 (NumOfGrp-1);
    sof_out <= sof_in1(NumOfGrp-1);
 
