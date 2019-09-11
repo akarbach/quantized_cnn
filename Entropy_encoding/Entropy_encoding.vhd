@@ -2,7 +2,7 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_SIGNED.ALL;
-use ieee.numeric_std.all;    
+--use ieee.numeric_std.all;    
 --USE ieee.std_logic_arith.all;
 library work;
 --use work.types_packege.all;
@@ -31,8 +31,8 @@ entity Entropy_encoding is
            PCA_en        : boolean := TRUE; --TRUE; -- PCA Enable/Bypass
            Huff_enc_en   : boolean := TRUE;--FALSE; -- Huffman encoder Enable/Bypass
 
-  	       in_row        : integer := 114;
-  	       in_col        : integer := 114
+  	       in_row        : integer := 100;
+  	       in_col        : integer := 100
   	       );
   port    (
            clk       : in  std_logic;
@@ -42,10 +42,11 @@ entity Entropy_encoding is
            sof_in    : in  std_logic; -- start of frame
            eof       : in  std_logic; -- end of frame
 
-           w_unit_n  : in  std_logic_vector( 7 downto 0);  -- address weight generators,  8MSB - CL inputs, 8LSB - CL outputs
+           w_CLout_n : in  std_logic_vector( 7 downto 0);  -- address weight generators
+           w_CLin_n  : in  std_logic_vector( 7 downto 0);  -- address weight generators
            --w_in      : in  std_logic_vector(M-1 downto 0);  -- value
-           w_in      : in  vec(0 to CL_inputs -1)(M-1 downto 0);  -- value
-           w_num     : in  std_logic_vector      (  4 downto 0);  -- number of weight
+           w_in      : in  std_logic_vector(M-1 downto 0); --vec(0 to CL_inputs -1)(M-1 downto 0);  -- value
+           --w_num     : in  std_logic_vector(  4 downto 0);  -- number of weight
            w_en      : in  std_logic;
            w_inputN  : in std_logic_vector( 7 downto 0);         -- number of input that w_in is associated with
            w_lin_rdy : in std_logic;                             -- "ready" signal to load line to weight memory
@@ -60,7 +61,7 @@ entity Entropy_encoding is
            buf_rd    : in  std_logic;
            buf_num   : in  std_logic_vector (5      downto 0);
            d_out     : out vec(0 to number_output_features_g -1)(Wh-1 downto 0); --std_logic_vector (Wb  -1 downto 0);
-           en_out    : out std_logic_vector (64  -1 downto 0);
+           en_out    : out std_logic_vector (number_output_features_g  -1 downto 0);
            sof_out   : out std_logic);
 end Entropy_encoding;
 
@@ -94,10 +95,11 @@ component ConvLayer_paralel_w is
            en_in   : in std_logic;
            sof_in  : in std_logic; -- start of frame
 
-           w_unit_n: in std_logic_vector( 7 downto 0);         -- address weight generators -> CL outputs
-           w_in    : in vec(0 to CL_inputs -1)(M-1 downto 0);  -- value
-           w_num   : in std_logic_vector(  4 downto 0);        -- number of weight
-           w_en    : in std_logic;
+           w_vec   : in vec(0 to CL_inputs*CL_outs -1)(25*M-1 downto 0); 
+           --w_unit_n: in std_logic_vector( 7 downto 0);         -- address weight generators -> CL outputs
+           --w_in    : in vec(0 to CL_inputs -1)(M-1 downto 0);  -- value
+           --w_num   : in std_logic_vector(  4 downto 0);        -- number of weight
+           --w_en    : in std_logic;
 
            d_out   : out vec(0 to CL_outs -1)(W-1 downto 0); --std_logic_vector (W-1 downto 0); --vec;
            en_out  : out std_logic;
@@ -106,20 +108,21 @@ end component;
 
 component PCA_pixel is
     generic (
-        number_output_features_g : positive := 64;
-        N                        : integer  :=  8; -- input/output data width
-        M                        : integer  :=  8; -- input weight width
-        SR                       : integer  :=  1  -- data shift right before output (deleted LSBs)
+        N              : integer := 8; -- input/output data width
+        M              : integer := 8; -- input weight width
+        SR             : integer := 1;  -- data shift right before output (deleted LSBs)
+        in_row         : integer := 4;
+        in_col         : integer := 6
         );
     port (
-        reset          : in  std_logic;
-        clock          : in  std_logic;
+        rst            : in  std_logic;
+        clk            : in  std_logic;
         sof            : in  std_logic;
         eof            : in  std_logic;
         data_in        : in  std_logic_vector(N-1 downto 0);
         data_in_valid  : in  std_logic;
-        weight_in      : in  vec(0 to number_output_features_g - 1)(M-1 downto 0);
-        data_out       : out vec(0 to number_output_features_g - 1)(N-1 downto 0);
+        weight_in      : in  vec(0 to in_row - 1)(M-1 downto 0);
+        data_out       : out vec(0 to in_row - 1)(N-1 downto 0);
         data_out_valid : out std_logic
     ) ;
 end component;
@@ -155,11 +158,13 @@ constant  TP      : string := "no";   --"no"/"yes"  -- Test pattern output
  
 constant CL_w_width : integer := 8;
 
-type     W_mem_type  is array ( 0 to CL_output*Kernel_size*Kernel_size) of std_logic_vector(CL_inputs*M-1 downto 0);
-signal   W_mem       : W_mem_type ;
+--type     W_mem_type  is array ( 0 to number_output_features_g*Kernel_size*Kernel_size) of std_logic_vector(CL_inputs*M-1 downto 0);
+--signal   W_mem       : W_mem_type ;
+signal   w_vec        : vec(0 to CL_inputs*1 -1)(25*M-1 downto 0); 
 
 signal   w_inputN_i   : integer range 0 to 2**16-1;
-signal   weight_lin  : std_logic_vector         (CL_inputs * M - 1 downto 0);
+signal   addr_wr      : integer range 0 to 2**16-1;
+signal   weight_lin   : std_logic_vector         (25 * M - 1 downto 0);
 
 
 --signal  w_num       : std_logic_vector(  3 downto 0);
@@ -175,9 +180,9 @@ signal  cl_en_out, cl_sof_out: std_logic;
 --signal  d01_out1       : std_logic_vector (CL_W-1 downto 0);
 signal  d01_out1    :vec(0 to 0)(N-1 downto 0);
 
-signal weight_pca_in  : vec(0 to number_output_features_g - 1)(M-1 downto 0);
-signal data_pca_out   : vec(0 to number_output_features_g - 1)(N-1 downto 0);
-signal data_pca_out1  : vec(0 to number_output_features_g - 1)(N-1 downto 0);
+signal weight_pca_in  : vec(0 to in_row - 1)(M-1 downto 0);
+signal data_pca_out   : vec(0 to in_row - 1)(N-1 downto 0);
+signal data_pca_out1  : vec(0 to in_row - 1)(N-1 downto 0);
 
 signal pca_en_out  : std_logic;
 signal pca_sof_out : std_logic;
@@ -248,6 +253,15 @@ begin
 -- w_unit_n    -----------------------------   A1    ----------------------   A2
 -- w_num     ----  V1  V2  V3  ... Vn ______________V1  V2  V3  ... Vn ___________  ...
 -- w_in      ----  V1  V2  V3  ... Vn ______________V1  V2  V3  ... Vn ___________  ...
+w_init_p : process (clk)
+begin
+   if rising_edge(clk) then
+      if w_lin_rdy = '1' then
+        w_vec(conv_integer(unsigned('0' & w_CLout_n))*conv_integer(unsigned('0' & w_CLin_n)))<= weight_lin;
+      end if;
+   end if;
+end process w_init_p;
+
 
 w_inputN_i <= conv_integer(unsigned('0' & w_inputN));
 
@@ -265,15 +279,15 @@ begin
 end process w_en_p;
 
 
-addr_wr <= conv_integer(unsigned('0' & w_pixel_N))*w_pixel_L_max + conv_integer(unsigned('0' & w_pixel_L));
-w_lin_p : process (clk)
-begin
-   if rising_edge(clk) then
-         if w_lin_rdy = '1' then
-            weight_mat(addr_wr) <=  weight_lin;
-         end if;
-   end if;
-end process w_lin_p;
+--addr_wr <= conv_integer(unsigned('0' & w_unit_n))*number_output_features_g + conv_integer(unsigned('0' & w_num));
+--w_lin_p : process (clk)
+--begin
+--   if rising_edge(clk) then
+--         if w_lin_rdy = '1' then
+--            W_mem(addr_wr) <=  weight_lin;
+--         end if;
+--   end if;
+--end process w_lin_p;
 
 
 CL: ConvLayer_paralel_w
@@ -299,10 +313,11 @@ CL: ConvLayer_paralel_w
            d_in          => d_in     ,
            en_in         => en_in    ,
            sof_in        => sof_in   ,
-           w_unit_n      => w_unit_n ,
-           w_in          => w_in     ,
-           w_num         => w_num    ,
-           w_en          => w_en     ,
+           w_vec         => w_vec    ,
+           --w_unit_n      => w_unit_n ,
+           --w_in          =>  (others =>  (others => '0')), -- w_in     ,
+           --w_num         => w_num    ,
+           --w_en          => w_en     ,
            d_out         => d01_out1  ,
            en_out        => cl_en_out ,
            sof_out       => cl_sof_out  
@@ -333,22 +348,23 @@ d01_out(d01_out'left downto 8) <= (others => '0');
 
 g_PCA_en: if PCA_en = TRUE generate
 
-PCA64_inst: PCA_pixel 
+PCA: PCA_pixel 
   generic map (
-        number_output_features_g => number_output_features_g,
-        N                        => N,
-        M                        => M,
-        SR                       => SR_PCA 
+        in_row         => in_row,
+        in_col         => in_col,
+        N              => N     ,
+        M              => M     ,
+        SR             => SR_PCA 
         )
     port map(
-        reset          => clk,
-        clock          => rst,
-        sof            => cl_en_out, -- fix it, add start of frame
-        eof            => '1',
+        rst            => clk          ,
+        clk            => rst          ,
+        sof            => cl_en_out    , -- fix it, add start of frame
+        eof            => '1'          ,
         data_in        => d01_out1(0)(N-1 downto N - 1 -7), -- d01_out1(0)(d01_out1'left downto d01_out1'left -7),
-        data_in_valid  => cl_en_out,
+        data_in_valid  => cl_en_out    ,
         weight_in      => weight_pca_in,
-        data_out       => data_pca_out,
+        data_out       => data_pca_out ,
         data_out_valid => pca_en_out
     ) ;
 

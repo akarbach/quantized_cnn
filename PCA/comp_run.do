@@ -1,7 +1,6 @@
-vcom -93 -work work  custom_types.vhd
-vcom -93 -work work  ../binary_adder/Binary_adder8.vhd
-vcom -93 -work work  PCA_64.vhd
-vcom -93 -work work  PCA_64_tb.vhd
-vsim work.PCA_64_tb
+vcom -2008 -work work  ../cnn_1/ConvLayer_types_package.vhd
+vcom -2008 -work work  PCA_pixel.vhd
+vcom -2008 -work work  PCA_pixel_tb.vhd
+vsim work.PCA_pixel_tb
 do wave.do
-run 10000ns
+run 1000ns

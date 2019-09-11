@@ -36,10 +36,11 @@ entity ConvLayer_paralel_w is
   	       --sol     : in std_logic; -- start of line
   	       --eof     : in std_logic; -- end of frame
 
-           w_unit_n: in std_logic_vector( 7 downto 0);         -- address weight generators -> CL outputs
-           w_in    : in vec(0 to CL_inputs -1)(M-1 downto 0);  -- value
-           w_num   : in std_logic_vector(  4 downto 0);        -- number of weight
-           w_en    : in std_logic;
+           w_vec   : in vec(0 to CL_inputs*CL_outs -1)(25*M-1 downto 0); 
+           --w_unit_n: in std_logic_vector( 7 downto 0);         -- address weight generators -> CL outputs
+           --w_in    : in vec(0 to CL_inputs -1)(M-1 downto 0);  -- value
+           --w_num   : in std_logic_vector(  4 downto 0);        -- number of weight
+           --w_en    : in std_logic;
 
            d_out   : out vec(0 to CL_outs -1)(W-1 downto 0); --std_logic_vector (W-1 downto 0); --vec;
            en_out  : out std_logic;
@@ -330,31 +331,31 @@ signal sof_sums    : std_logic;
 
 begin
 
---w_unit_input  <= conv_integer(unsigned('0' & w_unit_n( 7 downto 0)));
-w_unit_output <= conv_integer(unsigned('0' & w_unit_n(7 downto 8)));
-
-w_en_p : process (clk,rst)
---w_en_p : process (w_unit_ni)
-begin
-   if rst = '1' then
-       w_unit_en     <= (others => '0');
-   elsif rising_edge(clk) then
-      w_in_s   <= w_in ;
-      w_num_s  <= w_num;
-
-         for i in 0 to CL_outs-1 loop
-            if w_en = '1' then
-               if w_unit_output = i then 
-                  w_unit_en(i) <= '1';
-               else 
-                  w_unit_en(i) <= '0';
-               end if;
-            else
-               w_unit_en(i) <= '0';
-            end if;
-      end loop;
-   end if;
-end process w_en_p;
+----w_unit_input  <= conv_integer(unsigned('0' & w_unit_n( 7 downto 0)));
+--w_unit_output <= conv_integer(unsigned('0' & w_unit_n(7 downto 8)));
+--
+--w_en_p : process (clk,rst)
+----w_en_p : process (w_unit_ni)
+--begin
+--   if rst = '1' then
+--       w_unit_en     <= (others => '0');
+--   elsif rising_edge(clk) then
+--      w_in_s   <= w_in ;
+--      w_num_s  <= w_num;
+--
+--         for i in 0 to CL_outs-1 loop
+--            if w_en = '1' then
+--               if w_unit_output = i then 
+--                  w_unit_en(i) <= '1';
+--               else 
+--                  w_unit_en(i) <= '0';
+--               end if;
+--            else
+--               w_unit_en(i) <= '0';
+--            end if;
+--      end loop;
+--   end if;
+--end process w_en_p;
 
 
 gen_inCL: for J in 0 to CL_inputs-1 generate
@@ -411,45 +412,45 @@ CL_d_g: ConvLayer_data_gen
 
 gen_CL: for I in 0 to CL_outs-1 generate
 
-CL_w_g:  ConvLayer_weight_gen
-  generic map (
-           BP         => BP         ,
-           M          => M          
-           )
-  port  map  (
-           clk        => clk       ,
-           rst        => rst       , 
-
-           w_in       => w_in_s(j)    ,
-           w_num      => w_num_s   ,
-           w_en       => w_unit_en(i)     , --(i)   ,
-
-           w1         => w1 (J*CL_outs + i) ,
-           w2         => w2 (J*CL_outs + i) ,
-           w3         => w3 (J*CL_outs + i) ,
-           w4         => w4 (J*CL_outs + i) ,
-           w5         => w5 (J*CL_outs + i) ,
-           w6         => w6 (J*CL_outs + i) ,
-           w7         => w7 (J*CL_outs + i) ,
-           w8         => w8 (J*CL_outs + i) ,
-           w9         => w9 (J*CL_outs + i) ,
-           w10        => w10(J*CL_outs + i) ,  
-           w11        => w11(J*CL_outs + i) ,  
-           w12        => w12(J*CL_outs + i) ,  
-           w13        => w13(J*CL_outs + i) ,  
-           w14        => w14(J*CL_outs + i) ,  
-           w15        => w15(J*CL_outs + i) ,  
-           w16        => w16(J*CL_outs + i) ,  
-           w17        => w17(J*CL_outs + i) ,  
-           w18        => w18(J*CL_outs + i) ,  
-           w19        => w19(J*CL_outs + i) ,  
-           w20        => w20(J*CL_outs + i) ,  
-           w21        => w21(J*CL_outs + i) ,  
-           w22        => w22(J*CL_outs + i) ,  
-           w23        => w23(J*CL_outs + i) ,  
-           w24        => w24(J*CL_outs + i) ,  
-           w25        => w25(J*CL_outs + i)   
-         );
+--CL_w_g:  ConvLayer_weight_gen
+--  generic map (
+--           BP         => BP         ,
+--           M          => M          
+--           )
+--  port  map  (
+--           clk        => clk       ,
+--           rst        => rst       , 
+--
+--           w_in       => w_in_s(j)    ,
+--           w_num      => w_num_s   ,
+--           w_en       => w_unit_en(i)     , --(i)   ,
+--
+--           w1         => w1 (J*CL_outs + i) ,
+--           w2         => w2 (J*CL_outs + i) ,
+--           w3         => w3 (J*CL_outs + i) ,
+--           w4         => w4 (J*CL_outs + i) ,
+--           w5         => w5 (J*CL_outs + i) ,
+--           w6         => w6 (J*CL_outs + i) ,
+--           w7         => w7 (J*CL_outs + i) ,
+--           w8         => w8 (J*CL_outs + i) ,
+--           w9         => w9 (J*CL_outs + i) ,
+--           w10        => w10(J*CL_outs + i) ,  
+--           w11        => w11(J*CL_outs + i) ,  
+--           w12        => w12(J*CL_outs + i) ,  
+--           w13        => w13(J*CL_outs + i) ,  
+--           w14        => w14(J*CL_outs + i) ,  
+--           w15        => w15(J*CL_outs + i) ,  
+--           w16        => w16(J*CL_outs + i) ,  
+--           w17        => w17(J*CL_outs + i) ,  
+--           w18        => w18(J*CL_outs + i) ,  
+--           w19        => w19(J*CL_outs + i) ,  
+--           w20        => w20(J*CL_outs + i) ,  
+--           w21        => w21(J*CL_outs + i) ,  
+--           w22        => w22(J*CL_outs + i) ,  
+--           w23        => w23(J*CL_outs + i) ,  
+--           w24        => w24(J*CL_outs + i) ,  
+--           w25        => w25(J*CL_outs + i)   
+--         );
 
 
  CL_c:  ConvLayer_calc
@@ -495,31 +496,31 @@ CL_w_g:  ConvLayer_weight_gen
            en_in      => en_s(0)        ,
            sof_in     => sof_s(0)       ,
 
-           w1         => w1 (j*CL_outs + i)     ,
-           w2         => w2 (j*CL_outs + i)     ,
-           w3         => w3 (j*CL_outs + i)     ,
-           w4         => w4 (j*CL_outs + i)     ,
-           w5         => w5 (j*CL_outs + i)     ,
-           w6         => w6 (j*CL_outs + i)     ,
-           w7         => w7 (j*CL_outs + i)     ,
-           w8         => w8 (j*CL_outs + i)     ,
-           w9         => w9 (j*CL_outs + i)     ,
-           w10        => w10(j*CL_outs + i)     ,  
-           w11        => w11(j*CL_outs + i)     ,  
-           w12        => w12(j*CL_outs + i)     ,  
-           w13        => w13(j*CL_outs + i)     ,  
-           w14        => w14(j*CL_outs + i)     ,  
-           w15        => w15(j*CL_outs + i)     ,  
-           w16        => w16(j*CL_outs + i)     ,  
-           w17        => w17(j*CL_outs + i)     ,  
-           w18        => w18(j*CL_outs + i)     ,  
-           w19        => w19(j*CL_outs + i)     ,  
-           w20        => w20(j*CL_outs + i)     ,  
-           w21        => w21(j*CL_outs + i)     ,  
-           w22        => w22(j*CL_outs + i)     ,  
-           w23        => w23(j*CL_outs + i)     ,  
-           w24        => w24(j*CL_outs + i)     ,  
-           w25        => w25(j*CL_outs + i)     ,
+           w1         => w_vec(j*CL_outs + i)( 1*M-1 downto  0*M) , --w1 (j*CL_outs + i)     ,
+           w2         => w_vec(j*CL_outs + i)( 2*M-1 downto  1*M) , --w2 (j*CL_outs + i)     ,
+           w3         => w_vec(j*CL_outs + i)( 3*M-1 downto  2*M) , --w3 (j*CL_outs + i)     ,
+           w4         => w_vec(j*CL_outs + i)( 4*M-1 downto  3*M) , --w4 (j*CL_outs + i)     ,
+           w5         => w_vec(j*CL_outs + i)( 5*M-1 downto  4*M) , --w5 (j*CL_outs + i)     ,
+           w6         => w_vec(j*CL_outs + i)( 6*M-1 downto  5*M) , --w6 (j*CL_outs + i)     ,
+           w7         => w_vec(j*CL_outs + i)( 7*M-1 downto  6*M) , --w7 (j*CL_outs + i)     ,
+           w8         => w_vec(j*CL_outs + i)( 8*M-1 downto  7*M) , --w8 (j*CL_outs + i)     ,
+           w9         => w_vec(j*CL_outs + i)( 9*M-1 downto  8*M) , --w9 (j*CL_outs + i)     ,
+           w10        => w_vec(j*CL_outs + i)(10*M-1 downto  9*M) , --w10(j*CL_outs + i)     ,  
+           w11        => w_vec(j*CL_outs + i)(11*M-1 downto 10*M) , --w11(j*CL_outs + i)     ,  
+           w12        => w_vec(j*CL_outs + i)(12*M-1 downto 11*M) , --w12(j*CL_outs + i)     ,  
+           w13        => w_vec(j*CL_outs + i)(13*M-1 downto 12*M) , --w13(j*CL_outs + i)     ,  
+           w14        => w_vec(j*CL_outs + i)(14*M-1 downto 13*M) , --w14(j*CL_outs + i)     ,  
+           w15        => w_vec(j*CL_outs + i)(15*M-1 downto 14*M) , --w15(j*CL_outs + i)     ,  
+           w16        => w_vec(j*CL_outs + i)(16*M-1 downto 15*M) , --w16(j*CL_outs + i)     ,  
+           w17        => w_vec(j*CL_outs + i)(17*M-1 downto 16*M) , --w17(j*CL_outs + i)     ,  
+           w18        => w_vec(j*CL_outs + i)(18*M-1 downto 17*M) , --w18(j*CL_outs + i)     ,  
+           w19        => w_vec(j*CL_outs + i)(19*M-1 downto 18*M) , --w19(j*CL_outs + i)     ,  
+           w20        => w_vec(j*CL_outs + i)(20*M-1 downto 19*M) , --w20(j*CL_outs + i)     ,  
+           w21        => w_vec(j*CL_outs + i)(21*M-1 downto 20*M) , --w21(j*CL_outs + i)     ,  
+           w22        => w_vec(j*CL_outs + i)(22*M-1 downto 21*M) , --w22(j*CL_outs + i)     ,  
+           w23        => w_vec(j*CL_outs + i)(23*M-1 downto 22*M) , --w23(j*CL_outs + i)     ,  
+           w24        => w_vec(j*CL_outs + i)(24*M-1 downto 23*M) , --w24(j*CL_outs + i)     ,  
+           w25        => w_vec(j*CL_outs + i)(25*M-1 downto 24*M) , --w25(j*CL_outs + i)     ,
 
            d_out      => d_out1  (j*CL_outs + i) ,
            en_out     => en_out1 (J)(i) ,
