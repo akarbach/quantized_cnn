@@ -12,15 +12,15 @@ entity Entropy_encoding is
   generic (
   	       mult_sum_CL   : string := "mult"; -- "sum";
            mult_sum_PCA  : string := "sum";
-           Kernel_size   : integer := 5; -- 3/5
+           Kernel_size   : integer := 3; -- 3/5
            zero_padding  : string := "yes";  --"no"/"yes"
            stride        : integer := 1;
-           CL_inputs     : integer := 3; -- number of inputs features
-           number_output_features_g : integer := 4; -- number of output features
+           CL_inputs     : integer := 6; -- number of inputs features
+           CL_outs       : integer := 6; -- number of output features
 
            N             : integer :=   8; -- input data width
            M             : integer :=   8; -- data weight width
-           SR_CL         : integer :=   1; -- data shift right before output (deleted LSBs)
+           SR_CL         : integer :=   8; -- data shift right before output (deleted LSBs)
            SR_PCA        : integer :=   6; -- data shift right before output (deleted LSBs)
            Huff_wid      : integer :=  12; -- Huffman weight maximum width                   (after change need nedd to update "Huff_code" matrix)
            Wh            : integer :=  16; -- Huffman unit output data width (Note W>=M)
@@ -31,8 +31,8 @@ entity Entropy_encoding is
            PCA_en        : boolean := TRUE; --TRUE; -- PCA Enable/Bypass
            Huff_enc_en   : boolean := TRUE;--FALSE; -- Huffman encoder Enable/Bypass
 
-  	       in_row        : integer := 100;
-  	       in_col        : integer := 100
+  	       in_row        : integer := 10;
+  	       in_col        : integer := 10
   	       );
   port    (
            clk       : in  std_logic;
@@ -60,8 +60,8 @@ entity Entropy_encoding is
 
            buf_rd    : in  std_logic;
            buf_num   : in  std_logic_vector (5      downto 0);
-           d_out     : out vec(0 to number_output_features_g -1)(Wh-1 downto 0); --std_logic_vector (Wb  -1 downto 0);
-           en_out    : out std_logic_vector (number_output_features_g  -1 downto 0);
+           d_out     : out vec(0 to CL_outs -1)(Wh-1 downto 0); --std_logic_vector (Wb  -1 downto 0);
+           en_out    : out std_logic_vector (CL_outs  -1 downto 0);
            sof_out   : out std_logic);
 end Entropy_encoding;
 
@@ -158,13 +158,14 @@ constant  TP      : string := "no";   --"no"/"yes"  -- Test pattern output
  
 constant CL_w_width : integer := 8;
 
---type     W_mem_type  is array ( 0 to number_output_features_g*Kernel_size*Kernel_size) of std_logic_vector(CL_inputs*M-1 downto 0);
+--type     W_mem_type  is array ( 0 to CL_outs*Kernel_size*Kernel_size) of std_logic_vector(CL_inputs*M-1 downto 0);
 --signal   W_mem       : W_mem_type ;
-signal   w_vec        : vec(0 to CL_inputs*1 -1)(25*M-1 downto 0); 
+signal   w_vec        : vec(0 to CL_inputs*1 -1)(Kernel_size*Kernel_size*M-1 downto 0); 
+signal   w_vec1       : vec(0 to CL_inputs*1 -1)(25*M-1 downto 0);
 
 signal   w_inputN_i   : integer range 0 to 2**16-1;
 signal   addr_wr      : integer range 0 to 2**16-1;
-signal   weight_lin   : std_logic_vector         (25 * M - 1 downto 0);
+signal   weight_lin   : std_logic_vector         (Kernel_size*Kernel_size* M - 1 downto 0);
 
 
 --signal  w_num       : std_logic_vector(  3 downto 0);
@@ -279,7 +280,7 @@ begin
 end process w_en_p;
 
 
---addr_wr <= conv_integer(unsigned('0' & w_unit_n))*number_output_features_g + conv_integer(unsigned('0' & w_num));
+--addr_wr <= conv_integer(unsigned('0' & w_unit_n))*CL_outs + conv_integer(unsigned('0' & w_num));
 --w_lin_p : process (clk)
 --begin
 --   if rising_edge(clk) then
@@ -288,7 +289,16 @@ end process w_en_p;
 --         end if;
 --   end if;
 --end process w_lin_p;
+w_gen25: if Kernel_size = 5 generate
+   w_vec1 <= w_vec;
+end generate w_gen25;
 
+w_gen9: if Kernel_size = 3 generate
+   for_9: for i in 0 to CL_inputs -1 generate
+      w_vec1(i)(25*M-1 downto Kernel_size*Kernel_size*M) <=  (others => '0');
+      w_vec1(i)(Kernel_size*Kernel_size*M-1 downto 0)    <=  w_vec(i);
+   end generate for_9;
+end generate w_gen9;
 
 CL: ConvLayer_paralel_w
   generic map(
@@ -313,7 +323,7 @@ CL: ConvLayer_paralel_w
            d_in          => d_in     ,
            en_in         => en_in    ,
            sof_in        => sof_in   ,
-           w_vec         => w_vec    ,
+           w_vec         => w_vec1   ,
            --w_unit_n      => w_unit_n ,
            --w_in          =>  (others =>  (others => '0')), -- w_in     ,
            --w_num         => w_num    ,
@@ -414,7 +424,7 @@ end generate g_PCA_bp;
   end process p_huff2;
 
 g_Huff_enc_en: if Huff_enc_en = TRUE generate
-   gen_Huf: for i in 0 to number_output_features_g-1 generate
+   gen_Huf: for i in 0 to CL_outs-1 generate
       Huffman_inst: Huffman
       generic map(
                N           => 8          ,  -- input data width

@@ -246,31 +246,31 @@ component multi_adder is
 end component;
 
 
-signal w1         : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
-signal w2         : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
-signal w3         : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
-signal w4         : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
-signal w5         : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
-signal w6         : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
-signal w7         : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
-signal w8         : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
-signal w9         : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
-signal w10        : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
-signal w11        : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
-signal w12        : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
-signal w13        : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
-signal w14        : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
-signal w15        : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
-signal w16        : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
-signal w17        : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
-signal w18        : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
-signal w19        : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
-signal w20        : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
-signal w21        : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
-signal w22        : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
-signal w23        : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
-signal w24        : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
-signal w25        : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
+--signal w1         : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
+--signal w2         : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
+--signal w3         : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
+--signal w4         : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
+--signal w5         : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
+--signal w6         : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
+--signal w7         : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
+--signal w8         : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
+--signal w9         : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
+--signal w10        : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
+--signal w11        : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
+--signal w12        : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
+--signal w13        : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
+--signal w14        : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
+--signal w15        : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
+--signal w16        : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
+--signal w17        : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
+--signal w18        : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
+--signal w19        : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
+--signal w20        : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
+--signal w21        : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
+--signal w22        : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
+--signal w23        : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
+--signal w24        : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
+--signal w25        : vec(0 to CL_outs*CL_inputs -1)(M-1 downto 0);
 
 
 

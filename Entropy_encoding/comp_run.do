@@ -7,7 +7,7 @@ vcom -2008 -work work  ../multiplier_parallel/generic_mult.vhd
 vcom -2008 -work work  ../cnn_1/ConvLayer_data_gen.vhd
 vcom -2008 -work work  ../cnn_1/ConvLayer_weight_gen.vhd
 vcom -2008 -work work  ../cnn_1/ConvLayer_calc.vhd
-vcom -2008 -work work  ../cnn_1/ConvLayer.vhd
+vcom -2008 -work work  ../cnn_1/ConvLayer_paralel_w.vhd
 
 vcom -2008 -work work  ../Fifo/Fifo.vhd
 
