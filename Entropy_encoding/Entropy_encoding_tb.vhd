@@ -17,7 +17,7 @@ entity Entropy_encoding_tb is
 
            N             : integer :=   8; -- input data width
            M             : integer :=   8; -- data weight width
-           SR_CL         : integer :=   1; -- data shift right before output (deleted LSBs)
+           SR_CL         : integer :=   7; -- data shift right before output (deleted LSBs)
            SR_PCA        : integer :=   6; -- data shift right before output (deleted LSBs)
            Huff_wid      : integer :=  12; -- Huffman weight maximum width                   (after change need nedd to update "Huff_code" matrix)
            Wh            : integer :=  16; -- Huffman unit output data width (Note W>=M)
@@ -25,11 +25,11 @@ entity Entropy_encoding_tb is
            depth         : integer :=  64; -- buffer depth
            burst         : integer :=  10; -- buffer read burst
 
-           PCA_en        : boolean := TRUE; --TRUE; -- PCA Enable/Bypass
+           PCA_en        : boolean := FALSE; --TRUE; -- PCA Enable/Bypass
            Huff_enc_en   : boolean := TRUE;--FALSE; -- Huffman encoder Enable/Bypass
 
-           in_row        : integer := 10;
-           in_col        : integer := 10
+           in_row        : integer := 9;
+           in_col        : integer := 7
            );
 end entity Entropy_encoding_tb;
 
@@ -81,6 +81,8 @@ component Entropy_encoding is
            pca_w_en  : in  std_logic;
            pca_w_num : in  std_logic_vector (5 downto 0);
            pca_w_in  : in  std_logic_vector (7 downto 0);
+           pca_col_n : in  std_logic_vector (9 downto 0);
+           pca_lin_rdy : in std_logic; 
 
            --sol     : in  std_logic; -- start of line
            --eof     : in  std_logic; -- end of frame
@@ -94,9 +96,11 @@ end component;
 
 signal clk     : std_logic;
 signal rst     : std_logic;
-signal pca_w_en  : std_logic;
-signal pca_w_num : std_logic_vector (5 downto 0);
-signal pca_w_in  : std_logic_vector (7 downto 0);
+signal pca_w_en    : std_logic;
+signal pca_w_num   : std_logic_vector (5 downto 0);
+signal pca_w_in    : std_logic_vector (7 downto 0);
+signal pca_col_n   : std_logic_vector (9 downto 0);
+signal pca_lin_rdy : std_logic; 
 signal d_in      : vec(0 to CL_inputs -1)(N-1 downto 0);
 signal en_in   : std_logic;
 signal sof_in  : std_logic; -- start of frame
@@ -126,6 +130,9 @@ begin
   w_lin_rdy <= '0'; 
   w_CLout_n(w_CLout_n'left downto 1) <= (others => '0');
   w_CLout_n(0) <= '1';
+  pca_w_en  <= '0';
+  pca_col_n<= (others => '0');
+  pca_lin_rdy <= '0';
   --d_in <= x"59"; --(others => '0');
   wait until rst = '0';
 
@@ -142,6 +149,18 @@ begin
   wait until rising_edge(clk); w_lin_rdy <= '0'; 
   wait until rising_edge(clk);
 
+     for j in 0 to in_col-1 loop
+        for i in 0 to in_row-1 loop
+           wait until rising_edge(clk); pca_w_en <= '1';   pca_w_num <= conv_std_logic_vector(  i, pca_w_num'length); 
+                                        pca_lin_rdy <= '0';pca_w_in  <= conv_std_logic_vector(i+j, pca_w_in 'length);
+        end loop;
+        wait until rising_edge(clk);    pca_w_en <= '0';
+                                                           pca_col_n <= conv_std_logic_vector(  j, pca_col_n'length);
+                                                           pca_lin_rdy <= '1';
+     end loop;
+     wait until rising_edge(clk);    pca_w_en <= '0'; pca_lin_rdy <= '0';
+     wait until rising_edge(clk); 
+     wait until rising_edge(clk); 
 
 --  while true loop
 
@@ -201,9 +220,11 @@ port map (
       w_inputN   => w_inputN  ,
       w_lin_rdy  => w_lin_rdy ,
 
-      pca_w_en  => pca_w_en   ,
-      pca_w_num => pca_w_num  ,
-      pca_w_in  => pca_w_in   ,
+      pca_w_en    => pca_w_en   ,
+      pca_w_num   => pca_w_num  ,
+      pca_w_in    => pca_w_in   ,
+      pca_col_n   => pca_col_n  ,
+      pca_lin_rdy => pca_lin_rdy,
 
       buf_rd  => buf_rd   ,
       buf_num => buf_num  ,

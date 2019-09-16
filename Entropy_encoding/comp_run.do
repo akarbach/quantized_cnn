@@ -17,4 +17,4 @@ vcom -2008 -work work  Entropy_encoding.vhd
 vcom -2008 -work work  Entropy_encoding_tb.vhd
 vsim work.Entropy_encoding_tb
 do wave.do
-run 1000ns
+run 3000ns

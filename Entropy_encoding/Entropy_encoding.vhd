@@ -29,7 +29,7 @@ entity Entropy_encoding is
            burst         : integer :=  10; -- buffer read burst
 
            PCA_en        : boolean := TRUE; --TRUE; -- PCA Enable/Bypass
-           Huff_enc_en   : boolean := TRUE;--FALSE; -- Huffman encoder Enable/Bypass
+           Huff_enc_en   : boolean := FALSE;--FALSE; -- Huffman encoder Enable/Bypass
 
   	       in_row        : integer := 10;
   	       in_col        : integer := 10
@@ -49,11 +49,13 @@ entity Entropy_encoding is
            --w_num     : in  std_logic_vector(  4 downto 0);  -- number of weight
            w_en      : in  std_logic;
            w_inputN  : in std_logic_vector( 7 downto 0);         -- number of input that w_in is associated with
-           w_lin_rdy : in std_logic;                             -- "ready" signal to load line to weight memory
+           w_lin_rdy : in std_logic;                             -- "ready" signal to load line to weight and pca memories
 
-           pca_w_en  : in  std_logic;
-           pca_w_num : in  std_logic_vector (5 downto 0);
-           pca_w_in  : in  std_logic_vector (7 downto 0);
+           pca_w_en    : in std_logic;
+           pca_w_num   : in std_logic_vector (5 downto 0);
+           pca_w_in    : in std_logic_vector (7 downto 0);
+           pca_col_n   : in std_logic_vector (9 downto 0);
+           pca_lin_rdy : in std_logic; 
 
   	       --sol     : in  std_logic; -- start of line
   	       --eof     : in  std_logic; -- end of frame
@@ -121,7 +123,8 @@ component PCA_pixel is
         eof            : in  std_logic;
         data_in        : in  std_logic_vector(N-1 downto 0);
         data_in_valid  : in  std_logic;
-        weight_in      : in  vec(0 to in_row - 1)(M-1 downto 0);
+        --weight_in      : in  vec(0 to in_row - 1)(M-1 downto 0);
+        weight_in      : in  std_logic_vector(in_row * M-1 downto 0);
         data_out       : out vec(0 to in_row - 1)(N-1 downto 0);
         data_out_valid : out std_logic
     ) ;
@@ -181,7 +184,14 @@ signal  cl_en_out, cl_sof_out: std_logic;
 --signal  d01_out1       : std_logic_vector (CL_W-1 downto 0);
 signal  d01_out1    :vec(0 to 0)(N-1 downto 0);
 
-signal weight_pca_in  : vec(0 to in_row - 1)(M-1 downto 0);
+signal pca_w_num_i  : integer range 0 to 1023;
+--signal weight_pca_in  : vec(0 to in_row - 1)(M-1 downto 0);
+signal weight_pca_in  : std_logic_vector(in_row * M-1 downto 0);
+signal weight_pca_out : std_logic_vector(in_row * M-1 downto 0);
+type     PCA_mem_type  is array ( 0 to in_col-1) of std_logic_vector(in_row * M-1 downto 0);
+signal   PCA_mem       : PCA_mem_type ;
+signal pca_index      : integer range 0 to 1023;
+
 signal data_pca_out   : vec(0 to in_row - 1)(N-1 downto 0);
 signal data_pca_out1  : vec(0 to in_row - 1)(N-1 downto 0);
 
@@ -347,14 +357,50 @@ d01_out(d01_out'left downto 8) <= (others => '0');
 --    end if;
 --  end process p_pca_weight1;
 
+pca_w_num_i <= conv_integer('0' & pca_w_num);
   p_pca_weight : process (clk)
   begin
     if rising_edge(clk) then
        if pca_w_en = '1' then
-          weight_pca_in(conv_integer('0' & pca_w_num)) <= pca_w_in;
+          weight_pca_in(M*(pca_w_num_i+1)-1 downto M*pca_w_num_i) <= pca_w_in;
        end if;
     end if;
   end process p_pca_weight;
+
+
+pca_w_p : process (clk)
+begin
+   if rising_edge(clk) then
+      if pca_lin_rdy = '1' then
+         PCA_mem(conv_integer('0' & pca_col_n)) <=  weight_pca_in;
+      end if;
+   end if;
+end process pca_w_p;
+
+pca_out_p : process (clk)
+begin
+   if rising_edge(clk) then
+      --if cl_en_out = '1' then
+         weight_pca_out <= PCA_mem(pca_index);
+      --end if;
+   end if;
+end process pca_out_p;
+
+pca_out2_p : process (clk,rst)
+begin
+   if rst = '1' then
+      pca_index       <= 0;
+   elsif rising_edge(clk) then
+      if cl_en_out = '1' then
+         if pca_index = in_col -1 then
+            pca_index <= 0;
+         else
+            pca_index <= pca_index + 1;
+         end if;
+      end if;
+   end if;
+end process pca_out2_p;
+
 
 g_PCA_en: if PCA_en = TRUE generate
 
@@ -367,13 +413,13 @@ PCA: PCA_pixel
         SR             => SR_PCA 
         )
     port map(
-        rst            => clk          ,
-        clk            => rst          ,
+        rst            => rst          ,
+        clk            => clk          ,
         sof            => cl_en_out    , -- fix it, add start of frame
         eof            => '1'          ,
-        data_in        => d01_out1(0)(N-1 downto N - 1 -7), -- d01_out1(0)(d01_out1'left downto d01_out1'left -7),
+        data_in        => d01_out1(0)(N-1 downto 0), -- (N-1 downto N - 1 -7), -- d01_out1(0)(d01_out1'left downto d01_out1'left -7),
         data_in_valid  => cl_en_out    ,
-        weight_in      => weight_pca_in,
+        weight_in      => weight_pca_out,
         data_out       => data_pca_out ,
         data_out_valid => pca_en_out
     ) ;
@@ -381,16 +427,15 @@ PCA: PCA_pixel
 end generate g_PCA_en;
 
 g_PCA_bp: if PCA_en = FALSE generate
-   pca_en_out                          <=  cl_en_out;
+   pca_en_out    <= cl_en_out;
+   data_pca_out(0)  <= d01_out1(0);
+   gen_no_pca: for i in 1 to in_row-1 generate
+      data_pca_out(i)  <= (others => '0');
+   end generate gen_no_pca;
 
---p_PCA_dis: process (clk)
--- begin
---    if  rising_edge(clk) then
---
---
---    end if;
--- end process p_PCA_dis;
-
+   --gen_no_pca: for i in 0 to in_row-1 generate
+   --   data_pca_out(i)  <= d01_out1(0);
+   --end generate gen_no_pca;
 end generate g_PCA_bp;
 
 
@@ -452,9 +497,12 @@ g_Huff_enc_en: if Huff_enc_en = TRUE generate
    end generate gen_Huf;
 end generate g_Huff_enc_en;
 
- --g_Huff_enc_dis: if Huff_enc_en = FALSE generate
- -- d_out(7 downto 0) <= d01_out1(0)(N-1 downto N - 1 -7); --  d01_out1(0)(d01_out1'left downto d01_out1'left -7);
- --end generate g_Huff_enc_dis;  
+ g_Huff_enc_dis: if Huff_enc_en = FALSE generate
+    gen_no_pca: for i in 0 to CL_outs-1 generate
+       en_out(i) <= pca_en_out;
+       d_out(i)(N-1 downto 0)  <= d01_out1(0)(N-1 downto 0);
+    end generate gen_no_pca;
+ end generate g_Huff_enc_dis;  
 
 
 end a;
