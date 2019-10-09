@@ -65,17 +65,6 @@ component Binary_adder8 is
            en_out        : out std_logic);                        
 end component;
 
-component generic_mult is
-generic (N: integer; 
-         M: integer
-         );
-port ( 
-       clk    :  in  std_logic;
-       rst    :  in  std_logic; 
-       a      :  in  std_logic_vector(N-1 downto 0);
-       b      :  in  std_logic_vector(M-1 downto 0);
-       prod   :  out std_logic_vector(M+N-1 downto 0) );
-end component;
 
 signal     en_in1, en_end2, en_end3 : std_logic_vector(1 downto 0) ;
 --signal en_in1v,  en_in2v,  en_in3v  : std_logic_vector (N-1 downto 0);
