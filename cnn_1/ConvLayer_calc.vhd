@@ -5,10 +5,7 @@ use IEEE.STD_LOGIC_SIGNED.ALL;
 
 entity ConvLayer_calc is
   generic (
-           Relu          : string := "yes"; --"no"/"yes"  -- nonlinear Relu function
-           BP            : string := "no";  --"no"/"yes"  -- Bypass
-           TP            : string := "no";  --"no"/"yes"  -- Test pattern output
-           mult_sum      : string := "sum"; --"mult"/"sum"
+           Relu          : std_logic := '0'; --'0'/'1'  -- nonlinear Relu function
            N             : integer := 8; -- input data width
            M             : integer := 8; -- input weight width
            W             : integer := 8; -- output data width      (Note, W+SR <= N+M+4)
@@ -135,8 +132,6 @@ signal d_tp        : std_logic_vector (W-1 downto 0);
 
 begin
 
-gen_no_BP: if BP = "no" and TP = "no" generate 
-
   insamp2 : process (clk,rst)
   begin
     if rst = '1' then
@@ -156,7 +151,6 @@ gen_no_BP: if BP = "no" and TP = "no" generate
     end if;
   end process insamp2;
 
-gen_Mults: if mult_sum = "mult" generate 
 -- convolution
   p_conv_oper : process (clk)
   begin
@@ -173,32 +167,7 @@ gen_Mults: if mult_sum = "mult" generate
  
     end if;
   end process p_conv_oper;
-end generate;  -- mult
 
-gen_Adds: if mult_sum = "sum" generate 
-
-  --A01: Binary_adder generic map (N => N,M => M) port map (clk => clk,rst => rst,en_in => '0', Multiplier => data2conv1, Multiplicand => w1,d_out => c01, en_out => open);
-  --A02: Binary_adder generic map (N => N,M => M) port map (clk => clk,rst => rst,en_in => '0', Multiplier => data2conv2, Multiplicand => w4,d_out => c02, en_out => open);
-  --A03: Binary_adder generic map (N => N,M => M) port map (clk => clk,rst => rst,en_in => '0', Multiplier => data2conv3, Multiplicand => w7,d_out => c03, en_out => open);
-  --A04: Binary_adder generic map (N => N,M => M) port map (clk => clk,rst => rst,en_in => '0', Multiplier => data2conv1, Multiplicand => w2,d_out => c04, en_out => open);
-  --A05: Binary_adder generic map (N => N,M => M) port map (clk => clk,rst => rst,en_in => '0', Multiplier => data2conv2, Multiplicand => w5,d_out => c05, en_out => open);
-  --A06: Binary_adder generic map (N => N,M => M) port map (clk => clk,rst => rst,en_in => '0', Multiplier => data2conv3, Multiplicand => w8,d_out => c06, en_out => open);
-  --A07: Binary_adder generic map (N => N,M => M) port map (clk => clk,rst => rst,en_in => '0', Multiplier => data2conv1, Multiplicand => w3,d_out => c07, en_out => open);
-  --A08: Binary_adder generic map (N => N,M => M) port map (clk => clk,rst => rst,en_in => '0', Multiplier => data2conv2, Multiplicand => w6,d_out => c08, en_out => open);
-  --A09: Binary_adder generic map (N => N,M => M) port map (clk => clk,rst => rst,en_in => '0', Multiplier => data2conv3, Multiplicand => w9,d_out => c09, en_out => open);
-
-  A1: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv1,  b  => w1,  prod => c01);
-  A2: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv2,  b  => w2,  prod => c02);
-  A3: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv3,  b  => w3,  prod => c03);
-  A4: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv4,  b  => w4,  prod => c04);
-  A5: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv5,  b  => w5,  prod => c05);
-  A6: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv6,  b  => w6,  prod => c06);
-  A7: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv7,  b  => w7,  prod => c07);
-  A8: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv8,  b  => w8,  prod => c08);
-  A9: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv9,  b  => w9,  prod => c09);
-
-
-end generate; -- sum
 
   p_conv_oper : process (clk)
   begin
@@ -217,7 +186,7 @@ end generate; -- sum
   p_relu : process (clk)
   begin
     if rising_edge(clk) then
-      if Relu = "yes" then
+      if Relu = '1' then
          relu_for: for i in 0 to c13'length-1  loop
            d_relu(i) <= c13(i) and not c13(c13'left);
          end loop relu_for;
@@ -261,40 +230,5 @@ en_out  <= en_ovf(EN_BIT);
 sof_out <= en_ovf(SOF_BIT);
 d_out   <= d_ovf (W + SR - 1 downto SR);
 
-end generate; -- BP = "no" and TP = "no"
-
-gen_TP_out: if BP = "no" and TP = "yes" generate 
-   p_tg_gen : process (clk,rst)
-  begin
-    if rst = '1' then
-       d_tp <= (others => '0');
-    elsif rising_edge(clk) then
-       if en_in = '1' then
-          d_tp <= d_tp + 1;
-       end if;
-       en_out  <= en_in;
-       sof_out <= sof_in;
-    end if;
-  end process p_tg_gen;
-  d_out   <= d_tp;
-  
-end generate; -- TP = "yes"
-
-gen_BP: if BP = "yes" generate 
- process (data2conv1)
- begin
-    if d_out'left > data2conv1'left then
-       d_out(data2conv1'left downto 0)   <= data2conv1(data2conv1'left downto 0);
-       d_out(d_out'left downto data2conv1'left + 1) <= (others => '0');
-    elsif d_out'left = data2conv1'left then
-       d_out <= data2conv1;
-    else
-       d_out <= data2conv1(d_out'left downto 0);
-    end if;
- end process ;
-  en_out  <= en_in;
-  sof_out <= sof_in;
-
-end generate; --  BP = "yes"
 
 end a;
