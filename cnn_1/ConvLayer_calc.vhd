@@ -141,7 +141,7 @@ begin
   end process insamp2;
 
 -- convolution
-  p_conv_oper : process (clk)
+  process (clk)
   begin
     if rising_edge(clk) then
       c01 <= w1 * data2conv1;
@@ -155,10 +155,10 @@ begin
       c09 <= w9 * data2conv9;
  
     end if;
-  end process p_conv_oper;
+  end process;
 
 
-  p_conv_oper : process (clk)
+  process (clk)
   begin
     if rising_edge(clk) then
 
@@ -169,7 +169,7 @@ begin
       c13 <= (c10(c10'left) & c10(c10'left) & c10) + (c11(c11'left) & c11(c11'left) & c11) + (c12(c12'left) & c12(c12'left) & c12);
 
     end if;
-  end process p_conv_oper;
+  end process;
 
 
   p_relu : process (clk)
