@@ -8,7 +8,7 @@ entity ConvLayer_calc is
            BP            : string := "no";  --"no"/"yes"  -- Bypass
            TP            : string := "no";  --"no"/"yes"  -- Test pattern output
            mult_sum      : string := "mult"; --"mult"/"sum"
-           Kernel_size   : integer := 7; -- 3/5/7
+           Kernel_size   : integer := 3; -- 3/5/7
            N             : integer := 8; -- input data width
            M             : integer := 8  -- input weight width
   	       );
@@ -66,7 +66,41 @@ signal en2conv     : std_logic_vector(1 downto 0);
 signal en_count    : std_logic_vector(1 downto 0);
 
 
-signal prod         : std_logic_vector ((Kernel_size*Kernel_size)*(N + M) -1 downto 0);
+signal prod         : std_logic_vector (Kernel_size*Kernel_size*(N + M) -1 downto 0);
+
+signal c01         : std_logic_vector (N + M -1 downto 0);
+signal c02         : std_logic_vector (N + M -1 downto 0);
+signal c03         : std_logic_vector (N + M -1 downto 0);
+signal c04         : std_logic_vector (N + M -1 downto 0);
+signal c05         : std_logic_vector (N + M -1 downto 0);
+signal c06         : std_logic_vector (N + M -1 downto 0);
+signal c07         : std_logic_vector (N + M -1 downto 0);
+signal c08         : std_logic_vector (N + M -1 downto 0);
+signal c09         : std_logic_vector (N + M -1 downto 0);
+
+signal c10         : std_logic_vector (N + M +1 downto 0);
+signal c11         : std_logic_vector (N + M +1 downto 0);
+signal c12         : std_logic_vector (N + M +1 downto 0);
+
+signal c13         : std_logic_vector (N + M +3 downto 0);
+
+-- kernel 5
+signal d01         : std_logic_vector (N + M -1 downto 0);
+signal d02         : std_logic_vector (N + M -1 downto 0);
+signal d03         : std_logic_vector (N + M -1 downto 0);
+signal d04         : std_logic_vector (N + M -1 downto 0);
+signal d05         : std_logic_vector (N + M -1 downto 0);
+signal d06         : std_logic_vector (N + M -1 downto 0);
+signal d07         : std_logic_vector (N + M -1 downto 0);
+signal d08         : std_logic_vector (N + M -1 downto 0);
+signal d09         : std_logic_vector (N + M -1 downto 0);
+signal d10         : std_logic_vector (N + M -1 downto 0);
+signal d11         : std_logic_vector (N + M -1 downto 0);
+signal d12         : std_logic_vector (N + M -1 downto 0);
+signal d13         : std_logic_vector (N + M -1 downto 0);
+signal d14         : std_logic_vector (N + M -1 downto 0);
+signal d15         : std_logic_vector (N + M -1 downto 0);
+signal d16         : std_logic_vector (N + M -1 downto 0);
 
 signal d20         : std_logic_vector (N + M +1 downto 0);
 signal d21         : std_logic_vector (N + M +1 downto 0);
@@ -105,41 +139,6 @@ signal d_relu      : std_logic_vector (N + M +5 downto 0);
 --signal en_conv1, en_conv2, en_conv3, en_conv4, en_conv5, en_conv6    : std_logic_vector(1 downto 0);
 signal en_relu, en_ovf     : std_logic_vector(1 downto 0);
 signal d_tp        : std_logic_vector (N + M +5 downto 0);
-------------- DEBUG START
-signal c01         : std_logic_vector (N + M -1 downto 0);
-signal c02         : std_logic_vector (N + M -1 downto 0);
-signal c03         : std_logic_vector (N + M -1 downto 0);
-signal c04         : std_logic_vector (N + M -1 downto 0);
-signal c05         : std_logic_vector (N + M -1 downto 0);
-signal c06         : std_logic_vector (N + M -1 downto 0);
-signal c07         : std_logic_vector (N + M -1 downto 0);
-signal c08         : std_logic_vector (N + M -1 downto 0);
-signal c09         : std_logic_vector (N + M -1 downto 0);
-
-signal c10         : std_logic_vector (N + M +1 downto 0);
-signal c11         : std_logic_vector (N + M +1 downto 0);
-signal c12         : std_logic_vector (N + M +1 downto 0);
-
-signal c13         : std_logic_vector (N + M +3 downto 0);
-
--- kernel 5
-signal d01         : std_logic_vector (N + M -1 downto 0);
-signal d02         : std_logic_vector (N + M -1 downto 0);
-signal d03         : std_logic_vector (N + M -1 downto 0);
-signal d04         : std_logic_vector (N + M -1 downto 0);
-signal d05         : std_logic_vector (N + M -1 downto 0);
-signal d06         : std_logic_vector (N + M -1 downto 0);
-signal d07         : std_logic_vector (N + M -1 downto 0);
-signal d08         : std_logic_vector (N + M -1 downto 0);
-signal d09         : std_logic_vector (N + M -1 downto 0);
-signal d10         : std_logic_vector (N + M -1 downto 0);
-signal d11         : std_logic_vector (N + M -1 downto 0);
-signal d12         : std_logic_vector (N + M -1 downto 0);
-signal d13         : std_logic_vector (N + M -1 downto 0);
-signal d14         : std_logic_vector (N + M -1 downto 0);
-signal d15         : std_logic_vector (N + M -1 downto 0);
-signal d16         : std_logic_vector (N + M -1 downto 0);
--------------- DEBUG END
 
 begin
 
@@ -239,38 +238,38 @@ gen_Adds: if mult_sum = "sum" generate
   --A09: Binary_adder generic map (N => N,M => M) port map (clk => clk,rst => rst,en_in => '0', Multiplier => data2conv3, Multiplicand => w9,d_out => c09, en_out => open);
   gen_mults: for i in 0 to Kernel_size*Kernel_size-1 generate
     A: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, 
-                    a    => data2conv((i+1)*     N  -1 downto i*     N ),  
-                    b    => w        ((i+1)*     M  -1 downto i*     M ),  
-                    prod => prod     ((i+1)*(N + M) -1 downto i*(N + M))  );
+                    a    => data2conv((i+1)*     N  -1 downto i*     N   ),  
+                    b    => w        ((i+1)*     M  -1 downto i*     M   ),  
+                    prod => prod     ((i+1)*(N + M) -1 downto i*(N + M)  )   );
   end generate gen_mults;
 
-  A1: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv(1*N-1 downto 0*N),  b  => w(1*N-1 downto 0*N),  prod => c01);
-  A2: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv(2*N-1 downto 1*N),  b  => w(2*N-1 downto 1*N),  prod => c02);
-  A3: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv(3*N-1 downto 2*N),  b  => w(3*N-1 downto 2*N),  prod => c03);
-  A4: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv(4*N-1 downto 3*N),  b  => w(4*N-1 downto 3*N),  prod => c04);
-  A5: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv(5*N-1 downto 4*N),  b  => w(5*N-1 downto 4*N),  prod => c05);
-  A6: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv(6*N-1 downto 5*N),  b  => w(6*N-1 downto 5*N),  prod => c06);
-  A7: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv(7*N-1 downto 6*N),  b  => w(7*N-1 downto 6*N),  prod => c07);
-  A8: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv(8*N-1 downto 7*N),  b  => w(8*N-1 downto 7*N),  prod => c08);
-  A9: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv(9*N-1 downto 8*N),  b  => w(9*N-1 downto 8*N),  prod => c09);
+  A1 : generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv( 1 * N -1 downto  0 * N ), b => w( 1 * M -1 downto  0 * M ), prod => c01);
+  A2 : generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv( 2 * N -1 downto  1 * N ), b => w( 2 * M -1 downto  1 * M ), prod => c02);
+  A3 : generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv( 3 * N -1 downto  2 * N ), b => w( 3 * M -1 downto  2 * M ), prod => c03);
+  A4 : generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv( 4 * N -1 downto  3 * N ), b => w( 4 * M -1 downto  3 * M ), prod => c04);
+  A5 : generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv( 5 * N -1 downto  4 * N ), b => w( 5 * M -1 downto  4 * M ), prod => c05);
+  A6 : generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv( 6 * N -1 downto  5 * N ), b => w( 6 * M -1 downto  5 * M ), prod => c06);
+  A7 : generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv( 7 * N -1 downto  6 * N ), b => w( 7 * M -1 downto  6 * M ), prod => c07);
+  A8 : generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv( 8 * N -1 downto  7 * N ), b => w( 8 * M -1 downto  7 * M ), prod => c08);
+  A9 : generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv( 9 * N -1 downto  8 * N ), b => w( 9 * M -1 downto  8 * M ), prod => c09);
 
 sum_kernel5: if Kernel_size = 5 generate
-  A10: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv(10*N-1 downto  9*N),b  => w(10*N-1 downto  9*N),  prod => d01);
-  A11: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv(11*N-1 downto 10*N),b  => w(11*N-1 downto 10*N),  prod => d02);
-  A12: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv(12*N-1 downto 11*N),b  => w(12*N-1 downto 11*N),  prod => d03);
-  A13: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv(13*N-1 downto 12*N),b  => w(13*N-1 downto 12*N),  prod => d04);
-  A14: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv(14*N-1 downto 13*N),b  => w(14*N-1 downto 13*N),  prod => d05);
-  A15: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv(15*N-1 downto 14*N),b  => w(15*N-1 downto 14*N),  prod => d06);
-  A16: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv(16*N-1 downto 15*N),b  => w(16*N-1 downto 15*N),  prod => d07);
-  A17: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv(17*N-1 downto 16*N),b  => w(17*N-1 downto 16*N),  prod => d08);
-  A18: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv(18*N-1 downto 17*N),b  => w(18*N-1 downto 17*N),  prod => d09);
-  A19: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv(19*N-1 downto 18*N),b  => w(19*N-1 downto 18*N),  prod => d10);
-  A20: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv(20*N-1 downto 19*N),b  => w(20*N-1 downto 19*N),  prod => d11);
-  A21: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv(21*N-1 downto 20*N),b  => w(21*N-1 downto 20*N),  prod => d12);
-  A22: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv(22*N-1 downto 21*N),b  => w(22*N-1 downto 21*N),  prod => d13);
-  A23: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv(23*N-1 downto 22*N),b  => w(23*N-1 downto 22*N),  prod => d14);
-  A24: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv(24*N-1 downto 23*N),b  => w(24*N-1 downto 23*N),  prod => d15);
-  A25: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv(25*N-1 downto 24*N),b  => w(25*N-1 downto 24*N),  prod => d16);
+  A10: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv(10 * N -1 downto  9 * N ), b => w(10 * M -1 downto  9 * M ), prod => d01);
+  A11: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv(11 * N -1 downto 10 * N ), b => w(11 * M -1 downto 10 * M ), prod => d02);
+  A12: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv(12 * N -1 downto 11 * N ), b => w(12 * M -1 downto 11 * M ), prod => d03);
+  A13: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv(13 * N -1 downto 12 * N ), b => w(13 * M -1 downto 12 * M ), prod => d04);
+  A14: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv(14 * N -1 downto 13 * N ), b => w(14 * M -1 downto 13 * M ), prod => d05);
+  A15: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv(15 * N -1 downto 14 * N ), b => w(15 * M -1 downto 14 * M ), prod => d06);
+  A16: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv(16 * N -1 downto 15 * N ), b => w(16 * M -1 downto 15 * M ), prod => d07);
+  A17: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv(17 * N -1 downto 16 * N ), b => w(17 * M -1 downto 16 * M ), prod => d08);
+  A18: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv(18 * N -1 downto 17 * N ), b => w(18 * M -1 downto 17 * M ), prod => d09);
+  A19: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv(19 * N -1 downto 18 * N ), b => w(19 * M -1 downto 18 * M ), prod => d10);
+  A20: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv(20 * N -1 downto 19 * N ), b => w(20 * M -1 downto 19 * M ), prod => d11);
+  A21: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv(21 * N -1 downto 20 * N ), b => w(21 * M -1 downto 20 * M ), prod => d12);
+  A22: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv(22 * N -1 downto 21 * N ), b => w(22 * M -1 downto 21 * M ), prod => d13);
+  A23: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv(23 * N -1 downto 22 * N ), b => w(23 * M -1 downto 22 * M ), prod => d14);
+  A24: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv(24 * N -1 downto 23 * N ), b => w(24 * M -1 downto 23 * M ), prod => d15);
+  A25: generic_mult generic map (N => N,M => M) port map ( clk => clk,rst => rst, a => data2conv(25 * N -1 downto 24 * N ), b => w(25 * M -1 downto 24 * M ), prod => d16);
 end generate;
 
   p_mult : process (clk,rst)
@@ -502,10 +501,9 @@ end generate; -- TP = "yes"
 
 gen_BP: if BP = "yes" generate 
 
-    d_out(N + M +5 downto 0) <= data2conv(N + M +5 downto 0);
+    d_out <=   data2conv     (N + M +5 downto 0);
     en_out  <= en_in;
     sof_out <= sof_in;
- --end process ;
 
 end generate; --  BP = "yes"
 
