@@ -28,7 +28,8 @@ constant EN_BIT  : integer range 0 to 1 := 0;
 constant SOF_BIT : integer range 0 to 1 := 1;
 
 signal   time_stable     : std_logic_vector (7-1 downto 0);
-constant time_stable_max : integer := 5;
+constant time_stable_max : integer := in_row*in_col;
+constant amount_of_pixels: integer := in_row*in_col;
 
 signal conv_run : std_logic;
 
@@ -50,7 +51,9 @@ addr_wr_d <= addr_wr_d1;
     elsif rising_edge(clk) then
        if sof_in = '1' then
           conv_run  <= '1';
-       elsif addr_rd_d1 = conv_std_logic_vector(in_row*in_col-1, addr_rd_d1'length)  then
+       --elsif addr_rd_d1 = conv_std_logic_vector(in_row*in_col-1, addr_rd_d1'length)  then
+       elsif addr_rd_w1 = conv_std_logic_vector(amount_of_pixels-1, addr_rd_w1'length) and
+             addr_rd_d1 = conv_std_logic_vector(amount_of_pixels-1, addr_rd_d1'length) then
           conv_run  <= '0';
        end if;
        en_out <= conv_run;
@@ -63,7 +66,11 @@ addr_wr_d <= addr_wr_d1;
        addr_rd_d1 <= (others => '0');
     elsif rising_edge(clk) then
        if conv_run = '1' then
-          addr_rd_d1 <= addr_rd_d1 + 1;
+          if addr_rd_d1 = conv_std_logic_vector(amount_of_pixels-1, addr_rd_d1'length)  then
+             addr_rd_d1 <= (others => '0');
+          else
+             addr_rd_d1 <= addr_rd_d1 + 1;
+          end if;
        else
           addr_rd_d1 <= (others => '0');
        end if;
@@ -79,10 +86,10 @@ addr_wr_d <= addr_wr_d1;
     elsif rising_edge(clk) then
        if conv_run = '1' then
           if time_stable = conv_std_logic_vector(time_stable_max-1, time_stable'length) then
-             time_stable <= time_stable + 1;
-          else
-             addr_rd_w1   <= addr_rd_w1 + 1;
              time_stable <= (others => '0');
+             addr_rd_w1   <= addr_rd_w1 + 1;
+          else
+             time_stable <= time_stable + 1;
           end if;
        else
           time_stable <= (others => '0');

@@ -7,9 +7,9 @@ use IEEE.STD_LOGIC_SIGNED.ALL;
 
 entity ConvLayer_1CE_top is
   generic (
---           addr_w        : integer := 6;
---           in_row        : integer := 10;
---           in_col        : integer := 10;
+           addr_w        : integer := 6;
+           in_row        : integer := 10;
+           in_col        : integer := 10;
            Kernel_size   : integer := 7; -- 3/5/7
            N             : integer := 4  -- input data/weigth width
   	       );
@@ -20,10 +20,10 @@ entity ConvLayer_1CE_top is
 
            data_wr     : in  std_logic;
            data_val    : in  std_logic_vector (Kernel_size*Kernel_size*N-1 downto 0);
-           data_addr   : in  std_logic_vector (Kernel_size*Kernel_size*N-1 downto 0);
+           data_addr   : in  std_logic_vector (                   addr_w-1 downto 0);
            w_wr        : in  std_logic;
            w_val       : in  std_logic_vector (Kernel_size*Kernel_size*N-1 downto 0);
-           w_addr      : in  std_logic_vector (Kernel_size*Kernel_size*N-1 downto 0);
+           w_addr      : in  std_logic_vector (                   addr_w-1 downto 0);
 
            out_rd       : in  std_logic;
            out_val      : out  std_logic_vector (2*N +5 downto 0)
@@ -82,9 +82,9 @@ constant BP            : string := "no";  --"no"/"yes"  -- Bypass
 constant TP            : string := "no";  --"no"/"yes"  -- Test pattern output
 constant mult_sum      : string := "mult"; --"mult"/"sum"
 
-constant addr_w        : integer := 6;
-constant in_row        : integer := 10;
-constant in_col        : integer := 10;
+--constant addr_w        : integer := 6;
+--constant in_row        : integer := 5;
+--constant in_col        : integer := 5;
 
 constant EN_BIT  : integer range 0 to 1 := 0;
 constant SOF_BIT : integer range 0 to 1 := 1;
@@ -114,7 +114,7 @@ signal  calc_sof_out : std_logic;
 signal  addr_out    : std_logic_vector (addr_w-1 downto 0);
 
 
-signal  en_out    : std_logic;
+signal  cntl_en_out  : std_logic;
 signal  addr_wr_d : std_logic_vector (addr_w-1 downto 0);
 
 begin
@@ -127,7 +127,7 @@ begin
   begin
     if rising_edge(clk) then
        if data_wr = '1' then
-          data_mem(conv_integer("0" & data_addr))  <= data_val;
+          data_mem(conv_integer('0' & data_addr))  <= data_val;
        end if;
        data2conv <= data_mem(conv_integer("0" & addr_rd_d));
     end if;
@@ -154,14 +154,14 @@ CE: ConvLayer_calc
            M            => M
            )
   port map (
-           clk          => clk      ,
-           rst          => rst      ,
-           data2conv    => data2conv,
-           en_in        => en_in    ,  -- from control
-           sof_in       => sof_in   ,  -- from input
-           w            => w        ,
-           d_out        => calc_d_out    ,
-           en_out       => calc_en_out   ,
+           clk          => clk         ,
+           rst          => rst         ,
+           data2conv    => data2conv   ,
+           en_in        => cntl_en_out ,  -- from control
+           sof_in       => sof_in      ,  -- from input
+           w            => w           ,
+           d_out        => calc_d_out  ,
+           en_out       => calc_en_out ,
            sof_out      => calc_sof_out
            );
 
@@ -173,12 +173,12 @@ control: ConvLayer_cntr
            in_col      => in_col
            )
   port map (
-           clk         => clk      ,
-           rst         => rst      ,
-           sof_in      => sof_in   ,
-           addr_rd_d   => addr_rd_d,
-           addr_rd_w   => addr_rd_w,
-           en_out      => en_out   ,
+           clk         => clk         ,
+           rst         => rst         ,
+           sof_in      => sof_in      ,
+           addr_rd_d   => addr_rd_d   ,
+           addr_rd_w   => addr_rd_w   ,
+           en_out      => cntl_en_out ,
            addr_wr_d   => addr_wr_d 
            );
 -------------------------------------------
