@@ -68,6 +68,7 @@ signal en_count    : std_logic_vector(1 downto 0);
 
 signal prod         : std_logic_vector (Kernel_size*Kernel_size*(N + M) -1 downto 0);
 
+
 signal c01         : std_logic_vector (N + M -1 downto 0);
 signal c02         : std_logic_vector (N + M -1 downto 0);
 signal c03         : std_logic_vector (N + M -1 downto 0);
@@ -122,11 +123,13 @@ signal f10        : std_logic_vector (N + M +1 downto 0);
 signal f11        : std_logic_vector (N + M +1 downto 0);
 signal f12        : std_logic_vector (N + M +1 downto 0);
 signal f13        : std_logic_vector (N + M +1 downto 0);
+signal ker1_del   : std_logic_vector (N + M +1 downto 0);
 
 signal f21        : std_logic_vector (N + M +3 downto 0);
 signal f22        : std_logic_vector (N + M +3 downto 0);
 signal f23        : std_logic_vector (N + M +3 downto 0);
 signal f24        : std_logic_vector (N + M +3 downto 0);
+signal ker1_del2  : std_logic_vector (N + M +3 downto 0);
 
 signal f25        : std_logic_vector (N + M +5 downto 0);
 
@@ -163,15 +166,18 @@ gen_Mults: if mult_sum = "mult" generate
       --c07 <= w7 * data2conv7;
       --c08 <= w8 * data2conv8;
       --c09 <= w9 * data2conv9;
-      c01 <= w(1*M-1 downto 0*M) * data2conv(1*N-1 downto 0*N);
-      c02 <= w(2*M-1 downto 1*M) * data2conv(2*N-1 downto 1*N);
-      c03 <= w(3*M-1 downto 2*M) * data2conv(3*N-1 downto 2*N);
-      c04 <= w(4*M-1 downto 3*M) * data2conv(4*N-1 downto 3*N);
-      c05 <= w(5*M-1 downto 4*M) * data2conv(5*N-1 downto 4*N);
-      c06 <= w(6*M-1 downto 5*M) * data2conv(6*N-1 downto 5*N);
-      c07 <= w(7*M-1 downto 6*M) * data2conv(7*N-1 downto 6*N);
-      c08 <= w(8*M-1 downto 7*M) * data2conv(8*N-1 downto 7*N);
-      c09 <= w(9*M-1 downto 8*M) * data2conv(9*N-1 downto 8*N);
+
+      if Kernel_size = 3 or Kernel_size = 5 then
+         c01 <= w(1*M-1 downto 0*M) * data2conv(1*N-1 downto 0*N);
+         c02 <= w(2*M-1 downto 1*M) * data2conv(2*N-1 downto 1*N);
+         c03 <= w(3*M-1 downto 2*M) * data2conv(3*N-1 downto 2*N);
+         c04 <= w(4*M-1 downto 3*M) * data2conv(4*N-1 downto 3*N);
+         c05 <= w(5*M-1 downto 4*M) * data2conv(5*N-1 downto 4*N);
+         c06 <= w(6*M-1 downto 5*M) * data2conv(6*N-1 downto 5*N);
+         c07 <= w(7*M-1 downto 6*M) * data2conv(7*N-1 downto 6*N);
+         c08 <= w(8*M-1 downto 7*M) * data2conv(8*N-1 downto 7*N);
+         c09 <= w(9*M-1 downto 8*M) * data2conv(9*N-1 downto 8*N);
+      end if;
 
       if Kernel_size = 5 then
          --d01 <= w10 * data2conv10 ;
@@ -289,6 +295,10 @@ end generate; -- sum
   p_conv_oper : process (clk)
   begin
     if rising_edge(clk) then
+      if Kernel_size = 1 then
+         ker1_del  <=     prod(prod    'left) &     prod(    prod'left) &     prod;
+         ker1_del2 <= ker1_del(ker1_del'left) & ker1_del(ker1_del'left) & ker1_del;
+      end if;
 
       c10 <= (c01(c01'left) & c01(c01'left) & c01) + (c02(c02'left) & c02(c02'left) & c02) + (c03(c03'left) & c03(c03'left) & c03);
       c11 <= (c04(c04'left) & c04(c04'left) & c04) + (c05(c05'left) & c05(c05'left) & c05) + (c06(c06'left) & c06(c06'left) & c06);
@@ -412,7 +422,7 @@ end generate; -- sum
   p_ker : process (clk)
   begin
     if rising_edge(clk) then
-
+ 
        if    Kernel_size = 7 then
           d_ker <= (f21(f21'left) & f21(f21'left) & f21) +
                    (f22(f22'left) & f22(f22'left) & f22) +
@@ -421,8 +431,10 @@ end generate; -- sum
        elsif Kernel_size = 5 then
           d_ker <= (c13(c13'left) & c13(c13'left) & c13) + 
                    (d24(d24'left) & d24(d24'left) & d24) ;
-       else
+       elsif Kernel_size = 3 then
           d_ker <= c13(c13'left) & c13(c13'left) & c13;
+       else  -- Kernel_size = 1
+          d_ker <= ker1_del2(ker1_del2'left) & ker1_del2(ker1_del2'left) & ker1_del2;
        end if;
     end if;
   end process p_ker;
