@@ -10,7 +10,7 @@ use work.ConvLayer_types_package.all;
 entity ConvLayer_grp is
   generic (
   	       mult_sum      : string := "mult"; --"mult"/"sum";
-           Kernel_size   : integer := 3; -- 3/5
+           Kernel_size   : integer := 3; -- 1/3/5/7
            CL_inputs     : integer := 4; -- number of inputs features
            CL_outs       : integer := 2; -- number of output features
            
@@ -18,10 +18,7 @@ entity ConvLayer_grp is
            N             : integer := 4; --W; -- input data width
            M             : integer := 4;  --W; -- input weight width
       
-           SR            : integer := 1; -- data shift right before output (deleted LSBs)
-           --bpp           : integer := 8; -- bit per pixel
-  	       in_row        : integer := 114;
-  	       in_col        : integer := 114
+           SR            : integer := 7 -- data shift right before output (deleted LSBs)
   	       );
   port    (
            clk       : in std_logic;
